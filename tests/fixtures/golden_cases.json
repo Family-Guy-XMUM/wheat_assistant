@@ -1,0 +1,438 @@
+{
+  "schema": "maizi.contract.golden.v1",
+  "notice": "Synthetic contract fixtures only. All channels, orders, products, names and values were invented for tests; no real accounts, people, credentials, logs or local paths.",
+  "engine": {
+    "products": [
+      {
+        "sku": "SKU-BLUE-001",
+        "name": "Synthetic Blueberry Jam",
+        "base_unit": "瓶",
+        "unit_factors": {"瓶": "1", "箱": "12"}
+      },
+      {
+        "sku": "SKU-TEA-002",
+        "name": "Synthetic Tea",
+        "base_unit": "袋",
+        "unit_factors": {"袋": "1", "包": "6"}
+      },
+      {
+        "sku": "SKU-NUT-003",
+        "name": "Synthetic Nut Mix",
+        "base_unit": "罐",
+        "unit_factors": {"罐": "1", "箱": "100"}
+      }
+    ],
+    "channel_fields": {
+      "order_id": "订单号",
+      "line_id": "明细号",
+      "product": "商品",
+      "quantity": "数量",
+      "unit": "单位",
+      "status": "订单状态",
+      "date": "日期"
+    },
+    "cases": {
+      "reconciliation": {
+        "flow": {
+          "channels": {
+            "shop-a": {
+              "fields": {
+                "order_id": "订单号",
+                "line_id": "明细号",
+                "product": "商品",
+                "quantity": "数量",
+                "unit": "单位",
+                "status": "订单状态",
+                "date": "日期"
+              },
+              "status_actions": {"待处理": "include", "已取消": "exclude"},
+              "dedup_mode": "business_key"
+            }
+          },
+          "aliases": {"蓝莓果酱": "SKU-BLUE-001"},
+          "date_from": null,
+          "date_to": null
+        },
+        "rows": [
+          {
+            "source_id": "shop-a",
+            "source_row_id": "synthetic-r1",
+            "source_name": "synthetic-shop-a-export",
+            "sheet": "Orders",
+            "row_number": 2,
+            "data": {
+              "订单号": "SYN-1001",
+              "明细号": "1",
+              "商品": "SKU-BLUE-001",
+              "数量": "2",
+              "单位": "瓶",
+              "订单状态": "待处理",
+              "日期": "2026-10-06"
+            }
+          },
+          {
+            "source_id": "shop-a",
+            "source_row_id": "synthetic-r2",
+            "source_name": "synthetic-shop-a-export",
+            "sheet": "Orders",
+            "row_number": 3,
+            "data": {
+              "订单号": "SYN-1002",
+              "明细号": "1",
+              "商品": "SKU-TEA-002",
+              "数量": "1",
+              "单位": "袋",
+              "订单状态": "已取消",
+              "日期": "2026-10-06"
+            }
+          },
+          {
+            "source_id": "shop-a",
+            "source_row_id": "synthetic-r3",
+            "source_name": "synthetic-shop-a-export",
+            "sheet": "Orders",
+            "row_number": 4,
+            "data": {
+              "订单号": "SYN-1001",
+              "明细号": "1",
+              "商品": "SKU-BLUE-001",
+              "数量": "2",
+              "单位": "瓶",
+              "订单状态": "待处理",
+              "日期": "2026-10-06"
+            }
+          },
+          {
+            "source_id": "shop-a",
+            "source_row_id": "synthetic-r4",
+            "source_name": "synthetic-shop-a-export",
+            "sheet": "Orders",
+            "row_number": 5,
+            "data": {
+              "订单号": "SYN-1003",
+              "明细号": "1",
+              "商品": "SKU-TEA-002",
+              "数量": "1",
+              "单位": "袋",
+              "订单状态": "已发货",
+              "日期": "2026-10-07"
+            }
+          },
+          {
+            "source_id": "shop-a",
+            "source_row_id": "synthetic-r5",
+            "source_name": "synthetic-shop-a-export",
+            "sheet": "Orders",
+            "row_number": 6,
+            "data": {
+              "订单号": "SYN-1004",
+              "商品": "SKU-BLUE-001",
+              "数量": "1",
+              "单位": "瓶",
+              "订单状态": "待处理",
+              "日期": "2026-10-07"
+            }
+          }
+        ],
+        "expected": {
+          "dispositions": {
+            "synthetic-r1": "included",
+            "synthetic-r2": "excluded",
+            "synthetic-r3": "duplicate",
+            "synthetic-r4": "exception",
+            "synthetic-r5": "exception"
+          },
+          "summary": {
+            "input": 5,
+            "included": 1,
+            "excluded": 1,
+            "duplicate": 1,
+            "exception": 2
+          },
+          "sku_quantities": {"SKU-BLUE-001": "2"}
+        }
+      },
+      "alias": {
+        "flow": {
+          "channels": {
+            "shop-a": {
+              "fields": {
+                "order_id": "订单号",
+                "line_id": "明细号",
+                "product": "商品",
+                "quantity": "数量",
+                "unit": "单位",
+                "status": "订单状态",
+                "date": "日期"
+              },
+              "status_actions": {"待处理": "include", "已取消": "exclude"},
+              "dedup_mode": "business_key"
+            }
+          },
+          "aliases": {"蓝莓果酱": "SKU-BLUE-001"},
+          "date_from": null,
+          "date_to": null
+        },
+        "rows": [
+          {
+            "source_id": "shop-a",
+            "source_row_id": "synthetic-alias-1",
+            "source_name": "synthetic-shop-a-export",
+            "sheet": "Orders",
+            "row_number": 2,
+            "data": {
+              "订单号": "SYN-2001",
+              "明细号": "1",
+              "商品": "蓝莓果酱",
+              "数量": "1",
+              "单位": "瓶",
+              "订单状态": "待处理",
+              "日期": "2026-10-08"
+            }
+          },
+          {
+            "source_id": "shop-a",
+            "source_row_id": "synthetic-alias-2",
+            "source_name": "synthetic-shop-a-export",
+            "sheet": "Orders",
+            "row_number": 3,
+            "data": {
+              "订单号": "SYN-2002",
+              "明细号": "1",
+              "商品": "蓝莓果酱礼盒",
+              "数量": "1",
+              "单位": "瓶",
+              "订单状态": "待处理",
+              "日期": "2026-10-08"
+            }
+          }
+        ],
+        "expected": {
+          "dispositions": {
+            "synthetic-alias-1": "included",
+            "synthetic-alias-2": "exception"
+          },
+          "summary": {
+            "input": 2,
+            "included": 1,
+            "excluded": 0,
+            "duplicate": 0,
+            "exception": 1
+          },
+          "sku_quantities": {"SKU-BLUE-001": "1"}
+        }
+      },
+      "date_range": {
+        "flow": {
+          "channels": {
+            "shop-a": {
+              "fields": {
+                "order_id": "订单号",
+                "line_id": "明细号",
+                "product": "商品",
+                "quantity": "数量",
+                "unit": "单位",
+                "status": "订单状态",
+                "date": "日期"
+              },
+              "status_actions": {"待处理": "include", "已取消": "exclude"},
+              "dedup_mode": "business_key"
+            }
+          },
+          "aliases": {},
+          "date_from": "2026-10-05",
+          "date_to": "2026-10-11"
+        },
+        "rows": [
+          {
+            "source_id": "shop-a",
+            "source_row_id": "synthetic-date-before",
+            "source_name": "synthetic-shop-a-export",
+            "sheet": "Orders",
+            "row_number": 2,
+            "data": {
+              "订单号": "SYN-3001",
+              "明细号": "1",
+              "商品": "SKU-BLUE-001",
+              "数量": "1",
+              "单位": "瓶",
+              "订单状态": "待处理",
+              "日期": "2026-10-04"
+            }
+          },
+          {
+            "source_id": "shop-a",
+            "source_row_id": "synthetic-date-start",
+            "source_name": "synthetic-shop-a-export",
+            "sheet": "Orders",
+            "row_number": 3,
+            "data": {
+              "订单号": "SYN-3002",
+              "明细号": "1",
+              "商品": "SKU-BLUE-001",
+              "数量": "1",
+              "单位": "瓶",
+              "订单状态": "待处理",
+              "日期": "2026-10-05"
+            }
+          },
+          {
+            "source_id": "shop-a",
+            "source_row_id": "synthetic-date-end",
+            "source_name": "synthetic-shop-a-export",
+            "sheet": "Orders",
+            "row_number": 4,
+            "data": {
+              "订单号": "SYN-3003",
+              "明细号": "1",
+              "商品": "SKU-BLUE-001",
+              "数量": "1",
+              "单位": "瓶",
+              "订单状态": "待处理",
+              "日期": "2026-10-11"
+            }
+          },
+          {
+            "source_id": "shop-a",
+            "source_row_id": "synthetic-date-after",
+            "source_name": "synthetic-shop-a-export",
+            "sheet": "Orders",
+            "row_number": 5,
+            "data": {
+              "订单号": "SYN-3004",
+              "明细号": "1",
+              "商品": "SKU-BLUE-001",
+              "数量": "1",
+              "单位": "瓶",
+              "订单状态": "待处理",
+              "日期": "2026-10-12"
+            }
+          }
+        ],
+        "expected": {
+          "dispositions": {
+            "synthetic-date-before": "excluded",
+            "synthetic-date-start": "included",
+            "synthetic-date-end": "included",
+            "synthetic-date-after": "excluded"
+          },
+          "summary": {
+            "input": 4,
+            "included": 2,
+            "excluded": 2,
+            "duplicate": 0,
+            "exception": 0
+          },
+          "sku_quantities": {"SKU-BLUE-001": "2"}
+        }
+      }
+    }
+  },
+  "guard": {
+    "channels": {
+      "shop-a": {
+        "fields": {
+          "order_id": "订单号",
+          "line_id": "明细号",
+          "product": "商品",
+          "quantity": "数量",
+          "unit": "单位",
+          "status": "订单状态",
+          "date": "日期"
+        },
+        "status_actions": {"待处理": "include", "已取消": "exclude"},
+        "dedup_mode": "business_key"
+      },
+      "shop-b": {
+        "fields": {
+          "order_id": "订单号",
+          "line_id": "明细号",
+          "product": "商品",
+          "quantity": "数量",
+          "unit": "单位",
+          "status": "订单状态",
+          "date": "日期"
+        },
+        "status_actions": {"已处理": "include"},
+        "dedup_mode": "business_key"
+      }
+    },
+    "cases": {
+      "known_statuses": {
+        "rows": [
+          {
+            "source_id": "shop-a",
+            "source_row_id": "synthetic-guard-known-1",
+            "source_name": "synthetic-shop-a-export",
+            "sheet": "Orders",
+            "row_number": 2,
+            "data": {"订单状态": "待处理"}
+          },
+          {
+            "source_id": "shop-a",
+            "source_row_id": "synthetic-guard-known-2",
+            "source_name": "synthetic-shop-a-export",
+            "sheet": "Orders",
+            "row_number": 3,
+            "data": {"订单状态": "已取消"}
+          },
+          {
+            "source_id": "shop-a",
+            "source_row_id": "synthetic-guard-known-3",
+            "source_name": "synthetic-shop-a-export",
+            "sheet": "Orders",
+            "row_number": 4,
+            "data": {"订单状态": "  待处理  "}
+          }
+        ],
+        "expected": {
+          "rows_checked": 3,
+          "covered": true,
+          "affected_row_ids": [],
+          "issues": [],
+          "unknown_values": []
+        }
+      },
+      "unknown_status": {
+        "rows": [
+          {
+            "source_id": "shop-a",
+            "source_row_id": "synthetic-guard-unknown-1",
+            "source_name": "synthetic-shop-a-export",
+            "sheet": "Orders",
+            "row_number": 2,
+            "data": {"订单状态": "已发货"}
+          },
+          {
+            "source_id": "shop-a",
+            "source_row_id": "synthetic-guard-unknown-2",
+            "source_name": "synthetic-shop-a-export",
+            "sheet": "Orders",
+            "row_number": 3,
+            "data": {"订单状态": "已发货"}
+          }
+        ],
+        "expected": {
+          "rows_checked": 2,
+          "covered": false,
+          "affected_row_ids": [
+            "synthetic-guard-unknown-1",
+            "synthetic-guard-unknown-2"
+          ],
+          "unknown_values": [
+            {
+              "channel_id": "shop-a",
+              "field": "订单状态",
+              "value": "已发货",
+              "count": 2,
+              "row_ids": [
+                "synthetic-guard-unknown-1",
+                "synthetic-guard-unknown-2"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}
