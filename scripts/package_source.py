@@ -1,40 +1,67 @@
-"""Package source and sanitized acceptance evidence from an explicit allowlist."""
+"""Package an explicit source allowlist and only the selected version's receipts."""
+import argparse
 import hashlib
 import json
 import zipfile
 from pathlib import Path
-from maizi import __version__
 
-ROOT=Path(__file__).resolve().parents[1]
-ROOT_FILES={"README.md","LICENSE","AGENTS.md","CONTRACT.md","REPLIT_MODULE.json",".env.example",".gitignore",
-            "pyproject.toml","uv.lock","Start_MaiZi.command","Start_MaiZi.bat","Setup_Windows.bat","Validate_Windows.bat",
-            "WINDOWS_VALIDATION.md","ACCEPTANCE.md"}
-TREES=["backend/maizi","frontend/src","frontend/public","frontend/e2e","frontend/dist","tests","scripts",".github/workflows"]
-IGNORED={"__pycache__",".pytest_cache",".hypothesis",".DS_Store","node_modules",".venv",".env",".git",".runtime"}
-EVIDENCE={"source-release.json","native-release.json","performance.json","planner-live.json","backup-restore.json","final-checks.json","privacy.json"}
+from maizi import __version__
+from maizi.release_evidence import candidate_info, manifest_digest, source_files as distributable_sources
+
+ROOT = Path(__file__).resolve().parents[1]
+EVIDENCE = {"source-release.json", "native-release.json", "performance.json", "browser-results.json", "final-checks.json", "eol-checkout.json"}
+
 
 def source_files():
-    files={ROOT/name for name in ROOT_FILES if (ROOT/name).is_file()}
-    for tree in TREES:
-        files.update(p for p in (ROOT/tree).rglob("*") if p.is_file() and not IGNORED.intersection(p.relative_to(ROOT).parts))
-    files.update(p for p in (ROOT/"frontend").iterdir() if p.is_file() and p.suffix in {".json",".ts",".html",".js"} and not p.name.endswith(".tsbuildinfo"))
-    return sorted(files)
+    return distributable_sources(ROOT)
+
 
 def main():
-    target=ROOT/"dist"/("MaiZi-Windows-Source-v"+__version__+".zip")
-    target.parent.mkdir(exist_ok=True)
-    manifest={}
-    with zipfile.ZipFile(target,"w",zipfile.ZIP_DEFLATED) as archive:
-        for path in source_files():
-            name=path.relative_to(ROOT).as_posix()
-            manifest[name]=hashlib.sha256(path.read_bytes()).hexdigest()
-            archive.write(path,"MaiZi_Assistant/"+name)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--verification-dir", type=Path)
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    target = args.output or ROOT/"dist"/("MaiZi-Windows-Source-v"+__version__+".zip")
+    if target.exists():
+        raise SystemExit("Source ZIP already exists. Preserve it and use --output for a new candidate.")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    paths = source_files()
+    snapshot = {path.relative_to(ROOT).as_posix(): path.read_bytes() for path in paths}
+    manifest = {name: hashlib.sha256(content).hexdigest() for name, content in snapshot.items()}
+    info = candidate_info(ROOT)
+    if info["candidate_sha256"] != manifest_digest(manifest):
+        raise SystemExit("Source changed while taking the packaging snapshot; freeze and retry")
+    evidence = []
+    if args.verification_dir:
         for name in sorted(EVIDENCE):
-            path=ROOT/"output"/"verification"/name
+            path = args.verification_dir/name
             if path.is_file():
-                archive.write(path,"MaiZi_Assistant/verification/"+name)
-        archive.writestr("MaiZi_Assistant/SOURCE_MANIFEST.json",json.dumps(manifest,indent=2))
+                content = path.read_bytes()
+                receipt = json.loads(content)
+                if receipt.get("version") != __version__:
+                    raise SystemExit("A selected receipt belongs to another release version")
+                if receipt.get("source_sha256") and receipt["source_sha256"] != info["source_sha256"]:
+                    raise SystemExit("A selected receipt belongs to another runtime candidate")
+                evidence.append((path,content))
+    try:
+        with zipfile.ZipFile(target,"w",zipfile.ZIP_DEFLATED) as archive:
+            for path in paths:
+                name = path.relative_to(ROOT).as_posix()
+                entry = zipfile.ZipInfo.from_file(path,"MaiZi_Assistant/"+name)
+                archive.writestr(entry,snapshot[name],compress_type=zipfile.ZIP_DEFLATED)
+            for path, content in evidence:
+                archive.writestr("MaiZi_Assistant/verification/"+path.name,content)
+            archive.writestr("MaiZi_Assistant/SOURCE_MANIFEST.json",json.dumps(manifest,indent=2))
+            archive.writestr("MaiZi_Assistant/CANDIDATE.json",json.dumps(info,indent=2))
+        current = {path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest() for path in source_files()}
+        if current != manifest or any(path.read_bytes() != content for path, content in evidence):
+            raise SystemExit("Source or evidence changed during packaging; partial ZIP removed, freeze and retry")
+    except BaseException:
+        target.unlink(missing_ok=True)
+        raise
     print(json.dumps({"archive":target.name,"source_files":len(manifest),"sha256":hashlib.sha256(target.read_bytes()).hexdigest(),
-                      "windows_native_verified":False}))
+                      "source_sha256":info["source_sha256"],"candidate_sha256":info["candidate_sha256"],"windows_native_verified":False}))
 
-if __name__=="__main__":main()
+
+if __name__=="__main__":
+    main()

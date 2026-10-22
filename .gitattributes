@@ -1,0 +1,5 @@
+# Preserve fixture bytes, including embedded CSV newlines, on every checkout.
+tests/fixtures/**/*.csv -text
+*.bat text eol=crlf
+*.command text eol=lf
+*.sh text eol=lf

@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 
 import psutil
+from maizi.runtime_environment import child_environment
 
 def execute_isolated(rows, products, flow):
     with tempfile.TemporaryDirectory(prefix="maizi-run-") as folder:
@@ -17,8 +18,7 @@ def execute_isolated(rows, products, flow):
             command = [sys.executable, "--worker", str(source), str(target)]
         else:
             command = [sys.executable, "-m", "maizi.worker", str(source), str(target)]
-        environment = {key: value for key, value in os.environ.items()
-                       if key in {"PATH", "SystemRoot", "WINDIR", "TEMP", "TMP", "TMPDIR", "LANG", "LC_ALL"}}
+        environment = child_environment()
         environment["PYTHONPATH"] = str(Path(__file__).resolve().parent.parent)
         process = subprocess.Popen(command, cwd=folder, env=environment, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
         monitor = psutil.Process(process.pid)

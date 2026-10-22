@@ -7,7 +7,8 @@ export type Summary = {input:number;included:number;excluded:number;duplicate:nu
 export type Run = {id:string;batch_id:string;flow_id:string;status:string;summary?:Summary;error?:string;snapshot?:string;result_hash?:string;export_approved?:boolean;export_state?:string;export_stage?:string;export_error?:string;export_id?:string};
 export type ResultRow = {source_row_id:string;source_id:string;source_name:string;sheet:string;row_number:number;row_end_number?:number;raw:Data;sku:string|null;quantity:string|null;unit?:string;disposition:string;reasons:{code:string;message:string}[];events:Data[];duplicate_of?:string};
 export type Page<T> = {rows:T[];total:number;offset:number;limit:number};
-export type Report = {errors:string[];input_hash:string;row_count:number;status_guard:Data;unresolved_products:Record<string,number>;unresolved_units:Record<string,number>;products:Data[];available_units:string[];observed_statuses:Record<string,Record<string,number>>;diff:{groups:{group:string;changed:boolean;before:unknown;after:unknown}[];inputs:{kind:string;message:string}[]}};
+export type HeldStatus = {channel_id:string;field:string;value:string};
+export type Report = {errors:string[];input_hash:string;row_count:number;status_guard:Data;hold_review:{required:boolean;snapshot_hash:string;groups:(HeldStatus & {count:number})[]};unresolved_products:Record<string,number>;unresolved_units:Record<string,number>;products:Data[];available_units:string[];observed_statuses:Record<string,Record<string,number>>;diff:{groups:{group:string;changed:boolean;before:unknown;after:unknown}[];inputs:{kind:string;message:string}[]}};
 
 export class ApiError extends Error {constructor(message:string,readonly status:number){super(message);}}
 export const responseLost=(error:unknown)=>!(error instanceof ApiError)||error.status>=500;

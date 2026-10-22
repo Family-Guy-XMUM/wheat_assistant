@@ -1,33 +1,64 @@
-# Windows x64 验证交接（0.2.0）
+# Windows x64 v0.2.1 复验交接
 
-本包是源码，Windows 原生包必须在 Windows 上构建。本轮开发机为 macOS arm64；下列 Windows 项目目前均为待验证，不能以脚本或 CI 配置代替实际通过。演示仅含合成数据，Orbyte 为模拟。
+**交付状态：修正候选，待新 Windows 实机回执。** 目标环境为 Windows 11 x64。v0.2.0 回执已证明安装、7项浏览器和手动三周流程可运行，但正式自动验收失败：CSV夹具换行、自动停止、过滤环境原生启动、性能数据库释放均有问题；这些旧失败不被覆盖。v0.2.1 的 macOS 通过不能代替 Windows 通过。
 
-## 1. 首次安装
+演示仅含团队自造合成数据，Orbyte 为模拟；本轮不调用真实模型。源码 ZIP 不是 Windows EXE，原生 ZIP 必须在 Windows 构建。
 
-1. 将源码 ZIP **完整解压**到本地目录，可选带空格和中文的目录，例如 `C:\MaiZi 验证\MaiZi_Assistant`。不要在压缩包预览中运行。
-2. 安装 Python 环境管理器 uv 和 Node.js 22+（含 npm），重新打开终端。首次安装需要联网，uv 会按锁文件准备 Python 3.12 与依赖。
-3. 双击 `Setup_Windows.bat`，应显示 `Setup complete`；再运行一次，确认既有 `.env` 不被覆盖。不需要填 API key。
-4. 双击 `Validate_Windows.bat`。它会运行全部 Python 测试、TypeScript／生产构建、无 key 的源码三周 HTTP 流程，构建本机原生 ZIP，并独立解压到带中文和空格的新目录，验证原生三周流程、停止及端口释放。不会调用模型或上传结果。
+## 1. 安装和自动复验
 
-自动结果应在 `output/verification/windows-validation.json` 显示 `passed: true`，五个步骤均通过。另有 `windows-source-release.json` 和 `windows-native-release.json`，两份均应 `passed: true`、`ai_calls: 0`、`stop_and_port_release: true`。全量 Python 测试数量及最终版本以 `ACCEPTANCE.md` 为准。
+1. 将源码 ZIP完整解压到新的中文、空格目录，例如 `C:\MaiZi 复验\MaiZi_Assistant`。保留旧版本目录和旧回执，不复制 Mac `.venv`、`node_modules`、私有 `.env` 或旧数据库。
+2. 准备 uv 和 Node.js 22+（含npm）。运行 `Setup_Windows.bat`；它用锁文件准备 Python 3.12，即使系统另有Python也不改用它。首次下载需要网络。
+3. 再运行 `Setup_Windows.bat`，确认已有 `.env` 不被覆盖。不需要填写key。
+4. 运行 `Validate_Windows.bat`，或在终端运行 `Validate_Windows.bat --no-pause`。
 
-## 2. 人工首次启动、停止与重启
+每次验证新建 `output/verification/v0.2.1/<attempt-id>/`，按顺序运行八阶段：Python测试、TS/生产构建、安装Chromium、浏览器验收、源码HTTP验收、本机原生构建、独立解压原生HTTP验收、三次规模性能验收。失败立即停止，后续步骤明确为 `not_run`；修复后重跑会创建另一目录。
 
-请逐项保留真实结果，失败时记录操作与界面错误，不勾选未执行项。
+通过要求：
 
-- [ ] `Start_MaiZi.bat` 自动打开本地网页，未配置 key 也能使用。
-- [ ] 点击 `01 Configure`，手动确认 `Jasmine500 → TEA-001` 和 `carton → box`；检查六组规则、执行。结果为 36 = 24 included + 3 excluded + 3 duplicate + 6 exception。
-- [ ] 查看异常原值及处理轨迹；确认异常后导出，Excel 可打开八张表。商品数量为 TEA-001 21、SOAP-002 33、RICE-003 84。
-- [ ] `02 Catch a change` 明确复用上次版本；`channel-b` 的 `Partially shipped` 保持待处理，明确改为 Exclude 后重新检查与六组确认；结果为 39 = 24 + 6 + 3 + 6。
-- [ ] `03 Reuse` 复用兼容版本；结果 24 行全部 included，规则版本不增加，本批仍独立审批。
-- [ ] 在启动控制台按 Ctrl+C；若询问终止批处理，输入 Y。原地址不再提供服务；再次启动可读到旧结果并下载旧导出。关闭浏览器本身不会停止服务。
-- [ ] 解压新生成的 `dist/MaiZi-Windows-AMD64-v0.2.0.zip`，在未带源码、`.venv`、Node 或私有 `.env` 的另一目录启动 `MaiZi.exe`，重复无 key 演示。自动独立解压测试会先执行一次相同核心路径。
-- [ ] 记录 Windows 版本、x64 架构、安装与人工测试结果、失败步骤，以及本机生成 ZIP 的 SHA-256。不发送用户名、机器名、私人目录或密钥。
+- `windows-validation.json` 的八阶段全部 `passed`，自动总评 `automated_passed: true`（`passed`为兼容别名）。`acceptance_status`仍为 `pending_operator_confirmation`，不能据此宣称人工验收完成。
+- `windows-source-release.json`、`windows-native-release.json` 都通过，`ai_calls: 0`；三次 `restart_cycles` 均为新实例且历史/旧下载一致；所有停止记录 `graceful: true`、`forced_cleanup: false`、端口拒绝连接且可绑定。
+- `windows-performance.json` 有 **3个完整试次**、`complete_trials: 3`、清理全部成功、八表/10000追溯/5000 SKU/内存采样通过，导出中位数 ≤10秒。缺数据、WinError32或不完整试次均不算通过。
+- 各报告的源码指纹一致，原生包SHA与实际文件一致。`base_commit`是开发基线，工作区候选还由 `candidate_sha256` 标识，不能把基线SHA当成新版本commit。
 
-## 3. 交回证据
+原生包位置为 `dist/MaiZi-Windows-AMD64-v0.2.1.zip`，以程序实际输出和报告中的名称为准。CI配置不代表CI已经运行或实机通过。
 
-交回三份 JSON、上述人工勾选结果，以及出现问题时的**脱敏**界面错误即可。自动报告含原生包 SHA-256；如另需计算，可在 PowerShell 使用 `Get-FileHash -Algorithm SHA256 .\dist\MaiZi-Windows-AMD64-v0.2.0.zip`。
+## 2. 人工复验清单
 
-详细日志 `.runtime/windows-validation-private.log` 可能含本机私人路径，先保留本机排查，不直接分享。不要发送 `.env`、运行数据库、缓存或 `.git`。自动报告的 `manual_start_stop: pending_operator_confirmation` 只有收到人工回执后才能由验收负责人关闭。
+请在本批目录新建 `windows-manual-checklist.md`，记录日期、实际操作者的项目代号、工具执行与真人复核是否分别完成。逐项填写通过/失败/未执行，不替他人签名。
 
-遇到安装失败，按窗口具体错误修复后重跑；请勿删除已有业务目录。若安全软件阻止未签名开发包，记录错误并使用源码入口，交由设备负责人处理，不关闭系统安全保护。端口 8765 被占用时启动器会选择其他本地端口，以控制台输出为准。
+- [ ] `Start_MaiZi.bat` 自动打开网页，无key可用。确认显示v0.2.1，输入为合成样例。
+- [ ] Week1：新建流程，明确确认 `Jasmine500 → TEA-001`、`carton → box`；检查六组并运行。结果 `36 = 24 + 3 + 3 + 6`，规则v1。
+- [ ] 导出并用实际Excel打开八张表；TEA-001=21、SOAP-002=33、RICE-003=84。保留Excel保护视图，不关闭系统保护。
+- [ ] Week2明确复用v1：`Partially shipped` 初始为 **Unreviewed**；即使勾选六组，运行按钮仍禁用。
+- [ ] 明确选择 **Hold as exception** 或勾选对应 `Confirm hold`，重新确认六组后可运行；结果 `39 = 24 + 3 + 3 + 9`，三条新状态只在Exceptions中，规则仍v1。
+- [ ] 修改规则或切换来源版本后，旧Hold确认和六组检查清除，必须重新预检/确认；不能继承上批确认。
+- [ ] 在Week2新草稿中把该状态改为Exclude，重新检查和六组确认；结果 `39 = 24 + 6 + 3 + 6`，规则v2，旧Hold结果仍在。
+- [ ] Week3明确复用v2：24行全部included，规则保持v2，本批独立审批。
+- [ ] 在启动控制台按Ctrl+C；如询问终止批处理则输入Y。旧地址不再提供服务；再次启动后能浏览上述四次运行并下载旧导出。关闭浏览器不等于停止应用。
+- [ ] 完整解压新原生ZIP到另一中文、空格目录，无源码、`.venv`、`node_modules`或私有`.env`；重复上述无key流程、Excel打开、停止与重启。
+
+原生依赖隔离可在该目录的PowerShell中使用**本进程范围**PATH，不修改系统配置：
+
+```powershell
+$maiziOldPath = $env:PATH
+try {
+    $env:PATH = Join-Path $env:SystemRoot 'System32'
+    .\MaiZi.exe --data-dir .\synthetic-data --port 8765 --strict-port
+} finally {
+    $env:PATH = $maiziOldPath
+}
+```
+
+若端口被其他服务占用，选择空闲端口并记录；自动验收使用严格原端口重启。保留SystemRoot/WINDIR等系统环境，禁止清空所有系统变量。仅隔离PATH时，如实记录此方法，不能写成“在未安装Python/Node的全新系统验证”。
+
+## 3. 交回内容与失败处理
+
+交回本次目录内的四份JSON、人工清单、必要的应用/Excel合成数据截图，以及新原生ZIP或单独明确其未附。通过PowerShell核对ZIP：
+
+```powershell
+Get-FileHash -Algorithm SHA256 .\dist\MaiZi-Windows-AMD64-v0.2.1.zip
+```
+
+原始控制台/浏览器轨迹及 `.runtime/windows-validation/`、`.runtime/release-private/`、`.runtime/benchmark-private/` 日志可能含私人目录，保留本机排查，未经脱敏不要分享。不要发送 `.env`、`synthetic-data`、实际运行数据库、`.git`、缓存或整个开发目录。
+
+自动JSON中的 `manual_start_stop`、`manual_excel` 保持 `pending_operator_confirmation`；自动通过不能替代操作者回执或真人复核。失败时保留原始JSON，注明失败阶段/错误码/重现步骤；不要删除断言、放宽10秒目标、跳过步骤或覆盖失败报告。若安全软件阻止未签名开发包，记录错误，交给设备负责人处理；不关闭系统保护。

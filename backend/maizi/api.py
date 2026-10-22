@@ -25,6 +25,7 @@ from maizi.models import ApproveRequest, ExportApproval, FlowSpec, PlanRequest, 
 from maizi.planner import configured, propose_live, suggest_flow
 from maizi.samples import demo_files
 from maizi.store import Store, digest, now
+from maizi.status_review import confirm_holds, hold_review
 from maizi.workflows import metadata, review_diff, table_identity
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -46,19 +47,23 @@ def create_app(data_dir=None, frontend_dir=None):
 
     @asynccontextmanager
     async def lifespan(app):
-        for run in store.list("run"):
-            if run.get("status") == "running":
-                store.put("run", run["id"], {**run, "status": "interrupted", "error": "The app restarted. Retry this immutable run."})
-            current = store.get("run", run["id"])
-            if current.get("export_state") == "building":
-                store.put("run", run["id"], {**current, "export_state": "interrupted", "export_error": "The app restarted during export. Retry export."})
-        for export in store.list("export"):
-            if export["status"] == "building":
-                store.put("export", export["id"], {**export, "status": "interrupted", "error": "Export interrupted by restart"})
-        yield
+        try:
+            for run in store.list("run"):
+                if run.get("status") == "running":
+                    store.put("run", run["id"], {**run, "status": "interrupted", "error": "The app restarted. Retry this immutable run."})
+                current = store.get("run", run["id"])
+                if current.get("export_state") == "building":
+                    store.put("run", run["id"], {**current, "export_state": "interrupted", "export_error": "The app restarted during export. Retry export."})
+            for export in store.list("export"):
+                if export["status"] == "building":
+                    store.put("export", export["id"], {**export, "status": "interrupted", "error": "Export interrupted by restart"})
+            yield
+        finally:
+            store.close()
 
     app = FastAPI(title="MaiZi Assistant", version=__version__, lifespan=lifespan)
     app.state.store = store
+    instance_id = uuid.uuid4().hex
 
     @app.middleware("http")
     async def local_only(request: Request, call_next):
@@ -74,7 +79,8 @@ def create_app(data_dir=None, frontend_dir=None):
     @app.exception_handler(ValueError)
     async def invalid(request, exc):
         return JSONResponse({"detail": str(exc), "code": getattr(exc, "code", "INVALID_INPUT"),
-                             "line_number": getattr(exc, "line_number", None)}, status_code=422)
+                             "line_number": getattr(exc, "line_number", None)},
+                            status_code=409 if getattr(exc, "code", "") == "STATUS_REVIEW_REQUIRED" else 422)
 
     @app.exception_handler(KeyError)
     async def missing(request, exc):
@@ -221,6 +227,7 @@ def create_app(data_dir=None, frontend_dir=None):
         source = store.get("flow", source_flow_id) if source_flow_id else None
         old_assets = [store.get("file", key) for key in store.get("batch", source["batch_id"])["file_ids"]] if source else []
         return {"input_hash": batch_hash(assets), "row_count": len(rows), "errors": list(dict.fromkeys(errors)), "status_guard": guard,
+                "hold_review": hold_review(batch["id"], batch_hash(assets), spec, source_flow_id, guard),
                 "unresolved_products": unresolved_products, "unresolved_units": unresolved_units,
                 "observed_statuses": observed_statuses,
                 "available_units": sorted({unit for item in products for unit in item["unit_factors"]}),
@@ -230,7 +237,7 @@ def create_app(data_dir=None, frontend_dir=None):
     @app.get("/api/health")
     def health():
         return {"status": "ok", "version": __version__, "ai_configured": bool(configured()),
-                "model": os.getenv("LLM_MODEL", "") if configured() else None, "mode": "local"}
+                "model": os.getenv("LLM_MODEL", "") if configured() else None, "mode": "local", "instance_id": instance_id}
 
     @app.get("/api/state")
     def state():
@@ -295,19 +302,25 @@ def create_app(data_dir=None, frontend_dir=None):
 
     def existing_approval(identifier, request):
         spec = request.flow.model_dump()
+        held = sorted([x.model_dump() for x in request.held_statuses], key=lambda x: (x["channel_id"], x["field"], x["value"]))
+        def same_review(saved):
+            return (saved.get("approval_policy_version") == 2 and saved.get("held_statuses", []) == held
+                    and saved.get("hold_review_hash") == request.hold_review_hash)
         request_hash = digest({"batch": identifier, "input": request.expected_input_hash, "spec": spec,
                                "source_flow_id": request.source_flow_id})
-        source = metadata(store.get("flow", request.source_flow_id)) if request.source_flow_id else None
-        if source and source["batch_id"] == identifier and source["input_hash"] == request.expected_input_hash and source["spec_hash"] == digest(spec):
-            return source
-        return next((metadata(x) for x in store.list("flow") if x.get("approval_request_hash") == request_hash or
+        return next((metadata(x) for x in store.list("flow") if same_review(x) and (x.get("approval_request_hash") == request_hash or
                     (not x.get("approval_request_hash") and x["batch_id"] == identifier and
                      x["input_hash"] == request.expected_input_hash and x["spec_hash"] == digest(spec) and
-                     x.get("parent_flow_id") == request.source_flow_id)), None)
+                     x.get("parent_flow_id") == request.source_flow_id))), None)
 
     @app.post("/api/batches/{identifier}/approval-status")
     def approval_status(identifier: str, request: ApproveRequest):
-        store.get("batch", identifier)
+        report = inspect(store.get("batch", identifier), request.flow.model_dump(), request.source_flow_id)
+        if request.expected_input_hash != report["input_hash"]:
+            raise ValueError("Inputs changed since review; inspect them again")
+        if report["errors"]:
+            raise ValueError("; ".join(report["errors"]))
+        confirm_holds(report["hold_review"], [x.model_dump() for x in request.held_statuses], request.hold_review_hash)
         return {"flow": existing_approval(identifier, request)}
 
     @app.post("/api/batches/{identifier}/approve")
@@ -323,6 +336,7 @@ def create_app(data_dir=None, frontend_dir=None):
             raise ValueError("Review each concrete rule group before approving")
         if request.draft_id and store.get("draft", request.draft_id)["batch_id"] != identifier:
             raise ValueError("The selected draft belongs to another batch")
+        held = confirm_holds(report["hold_review"], [x.model_dump() for x in request.held_statuses], request.hold_review_hash)
         with store.lock:
             previous = existing_approval(identifier, request)
             if previous:
@@ -338,10 +352,12 @@ def create_app(data_dir=None, frontend_dir=None):
             saved = {"id": identifier_flow, "spec": spec, "spec_hash": digest(spec), "batch_id": identifier,
                      "input_hash": report["input_hash"], "reviewed": sorted(REVIEW_GROUPS), "actor": "Local demo operator",
                      "workflow_id": workflow_id, "rule_version": version, "parent_flow_id": request.source_flow_id,
-                     "approval_request_hash": request_hash, "draft_id": request.draft_id}
+                     "approval_request_hash": request_hash, "draft_id": request.draft_id,
+                     "approval_policy_version": 2, "held_statuses": held, "hold_review_hash": request.hold_review_hash}
             saved = store.commit_bundle(additions=[("flow", saved), ("approval", {
                 "stage": "rules", "decision": "approved", "flow_id": identifier_flow,
-                "snapshot": digest({"input": report["input_hash"], "flow": saved["spec_hash"]}), "actor": "Local demo operator"}),
+                "snapshot": digest({"input": report["input_hash"], "flow": saved["spec_hash"]}), "actor": "Local demo operator",
+                "approval_policy_version": 2, "held_statuses": held, "hold_review_hash": request.hold_review_hash}),
                 ("activity", {"action": "rules_approved", "subject": identifier_flow,
                               "detail": {"batch_id": identifier, "name": spec["name"], "rule_version": version}})])[0]
         return saved
@@ -383,9 +399,11 @@ def create_app(data_dir=None, frontend_dir=None):
             assets = assets_for(batch)
             if digest({"batch": batch_hash(assets), "flow": saved["spec_hash"]}) != run["snapshot"]:
                 raise ValueError("Inputs changed after approval")
-            report = inspect(batch, saved["spec"])
+            report = inspect(batch, saved["spec"], saved.get("parent_flow_id"))
             if report["errors"]:
                 raise ValueError("; ".join(report["errors"]))
+            if saved.get("approval_policy_version") == 2:
+                confirm_holds(report["hold_review"], saved.get("held_statuses", []), saved.get("hold_review_hash"))
             run = store.put("run", identifier, {**run, "status": "running", "error": None, "started_at": now()})
             try:
                 result = execute_isolated(all_rows(assets), report["products"], saved["spec"])

@@ -6,6 +6,7 @@ import threading
 import uuid
 import sqlite3
 import shutil
+from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -37,7 +38,7 @@ class Store:
         if (root / "maizi.sqlite").is_file() and not marker.exists():
             backup = root / "backups" / ("hardening-v2-" + uuid.uuid4().hex[:12])
             backup.mkdir(parents=True)
-            with sqlite3.connect(root / "maizi.sqlite") as source, sqlite3.connect(backup / "maizi.sqlite") as target:
+            with closing(sqlite3.connect(root / "maizi.sqlite")) as source, closing(sqlite3.connect(backup / "maizi.sqlite")) as target:
                 source.backup(target)
                 if target.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
                     raise ValueError("The pre-upgrade backup could not be verified")
@@ -46,24 +47,48 @@ class Store:
                     shutil.copytree(root / folder, backup / folder)
             marker.write_text(json.dumps({"backup": backup.name, "verified": True}), encoding="utf-8")
         if (root / "maizi.sqlite").is_file():
-            with sqlite3.connect(root / "maizi.sqlite") as database:
+            with closing(sqlite3.connect(root / "maizi.sqlite")) as database, database:
                 columns = {row[1] for row in database.execute("PRAGMA table_info(entities)")}
                 if columns and not {"id", "kind", "payload", "created"}.issubset(columns):
                     raise ValueError("Unsupported database schema. Preserve the verified backup and use a new data directory.")
                 if columns and "revision" not in columns:
                     database.execute("ALTER TABLE entities ADD COLUMN revision INTEGER NOT NULL DEFAULT 1")
         self.engine = create_engine("sqlite:///" + str(root / "maizi.sqlite"), connect_args={"check_same_thread": False, "timeout": 30})
-        Base.metadata.create_all(self.engine)
-        self.Session = sessionmaker(bind=self.engine)
         self.lock = threading.Lock()
+        self._closed = False
+        try:
+            Base.metadata.create_all(self.engine)
+            self.Session = sessionmaker(bind=self.engine)
+        except BaseException:
+            self.close()
+            raise
+
+    def close(self):
+        """Release checked-in SQLite handles; sessions must finish first."""
+        with self.lock:
+            if not self._closed:
+                self.engine.dispose()
+                self._closed = True
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
+
+    def _require_open(self):
+        if self._closed:
+            raise RuntimeError("The local store is closed")
 
     def add(self, kind, data):
+        self._require_open()
         payload = {**data, "id": uuid.uuid4().hex, "created_at": now()}
         with self.Session.begin() as session:
             session.add(Entity(id=payload["id"], kind=kind, payload=payload, created=payload["created_at"]))
         return payload
 
     def get(self, kind, identifier):
+        self._require_open()
         with self.Session() as session:
             row = session.get(Entity, identifier)
             if not row or row.kind != kind:
@@ -71,11 +96,13 @@ class Store:
             return dict(row.payload)
 
     def list(self, kind):
+        self._require_open()
         with self.Session() as session:
             rows = session.scalars(select(Entity).where(Entity.kind == kind).order_by(Entity.created.desc())).all()
             return [dict(row.payload) for row in rows]
 
     def put(self, kind, identifier, data):
+        self._require_open()
         with self.Session.begin() as session:
             row = session.get(Entity, identifier)
             if not row or row.kind != kind:
@@ -92,6 +119,7 @@ class Store:
 
     def commit_bundle(self, updates=(), additions=()):
         """Publish linked approvals and artifacts in one SQLite transaction."""
+        self._require_open()
         created = []
         with self.Session.begin() as session:
             for kind, identifier, data in updates:

@@ -2,7 +2,7 @@ name: Verify and build native local app
 on:
   workflow_dispatch:
   push:
-    paths: ["backend/**", "frontend/**", "tests/**", "scripts/**", "pyproject.toml", "uv.lock", "Start_MaiZi.bat", "Setup_Windows.bat", ".github/workflows/**"]
+    paths: ["backend/**", "frontend/**", "tests/**", "scripts/**", "pyproject.toml", "uv.lock", ".gitattributes", "Start_MaiZi.bat", "Setup_Windows.bat", "Validate_Windows.bat", ".github/workflows/**"]
 permissions:
   contents: read
 jobs:
@@ -30,6 +30,10 @@ jobs:
         if: runner.os == 'Windows'
         shell: cmd
         run: call Start_MaiZi.bat --check
+      - name: Windows versioned acceptance receipt
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: call Validate_Windows.bat --no-pause
       - name: Prepare macOS Python dependencies
         if: runner.os != 'Windows'
         run: uv sync --frozen
@@ -40,19 +44,28 @@ jobs:
         if: runner.os != 'Windows'
         run: npm --prefix frontend run build
       - run: uv run pytest -q
+        if: runner.os != 'Windows'
       - name: Install browser for acceptance tests
+        if: runner.os != 'Windows'
         run: npm --prefix frontend exec -- playwright install chromium
       - name: Browser acceptance
+        if: runner.os != 'Windows'
         run: npm --prefix frontend test
         env:
           MAIZI_BROWSER_CHANNEL: chromium
       - run: uv run python scripts/verify_release.py --output output/verification/source-release.json
+        if: runner.os != 'Windows'
       - run: uv run python scripts/build_bundle.py
+        if: runner.os != 'Windows'
       - name: Independently extracted native acceptance
+        if: runner.os != 'Windows'
         shell: pwsh
         run: |
           $bundle = Get-ChildItem dist/MaiZi-*.zip | Select-Object -First 1
           uv run python scripts/verify_release.py --bundle $bundle.FullName --output output/verification/native-release.json
+      - name: Three complete scale trials
+        if: runner.os != 'Windows'
+        run: uv run python scripts/benchmark_release.py --output output/verification/performance.json
       - uses: actions/upload-artifact@v4
         with:
           name: MaiZi-${{ matrix.os }}
@@ -62,5 +75,5 @@ jobs:
         if: always()
         with:
           name: Verification-${{ matrix.os }}
-          path: output/verification/*.json
+          path: output/verification/**/*.json
           retention-days: 7

@@ -23,7 +23,8 @@ test('three weeks, six approvals, exception repair and verified download',async(
  const download=page.waitForEvent('download');await page.getByRole('button',{name:'Approve & export XLSX',exact:true}).click();expect((await download).suggestedFilename()).toContain('.xlsx');
  await page.getByRole('button',{name:'Create preparation task',exact:true}).click();await expect(page.getByText(/Simulated task .* is ready/)).toBeVisible();
  await page.getByRole('button',{name:'Files & flows',exact:true}).click();await page.getByRole('button',{name:/02 Catch a change/}).click();await page.getByRole('button',{name:'Review editable setup'}).click();
- await expect(page.getByLabel('channel-b status Partially shipped',{exact:true})).toHaveValue('hold');
+ await expect(page.getByLabel('channel-b status Partially shipped',{exact:true})).toHaveValue('unreviewed');
+ for(const label of groups)await page.getByLabel(label,{exact:true}).check();await expect(page.getByRole('button',{name:'Approve rules & run',exact:true})).toBeDisabled();
  await page.getByLabel('channel-b status Partially shipped',{exact:true}).selectOption('exclude');
  await approve(page);await expect(page.getByText('39 = 24 + 6 + 3 + 6',{exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Files & flows',exact:true}).click();await page.getByRole('button',{name:/03 Reuse/}).click();await page.getByRole('button',{name:'Review editable setup'}).click();await approve(page);await expect(page.getByText('24 = 24 + 0 + 0 + 0',{exact:true})).toBeVisible();
@@ -81,6 +82,28 @@ test('ordinary uploads review a new source, all 75 statuses and actual master un
  expect(imports).toBe(1);const recovered=await (await request.get('/api/batches/by-key/'+committedBatch.idempotency_key)).json();expect(recovered.batch.id).toBe(committedBatch.id);await page.unroute('**/api/batches');
  await expect(page.getByText('Missing channel rule: new-source',{exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Approve rules & run',exact:true})).toBeDisabled();
  await page.getByRole('button',{name:'Add source rules for review',exact:true}).first().click();await page.getByRole('button',{name:'Check changes',exact:true}).click();
- await expect(page.getByLabel(/^new-source status /)).toHaveCount(75);await expect(page.getByLabel('new-source status State74',{exact:true})).toHaveValue('hold');
+ await expect(page.getByLabel(/^new-source status /)).toHaveCount(75);await expect(page.getByLabel('new-source status State74',{exact:true})).toHaveValue('unreviewed');
+ await page.getByLabel('new-source status State74',{exact:true}).selectOption('hold');for(const label of groups)await page.getByLabel(label,{exact:true}).check();await expect(page.getByRole('button',{name:'Approve rules & run',exact:true})).toBeDisabled();
  await page.getByLabel('Master unit',{exact:true}).selectOption('crate');await expect(page.getByLabel('Master unit',{exact:true})).toHaveValue('crate');
+});
+
+
+test('explicit Hold is required, editing clears confirmation, held orders stay isolated',async({page})=>{
+ await page.goto('/');await page.getByRole('button',{name:/02 Catch a change/}).click();await page.getByRole('button',{name:'Review editable setup'}).click();
+ await page.getByLabel('Product alias',{exact:true}).fill('Jasmine500');await page.getByLabel('Confirmed SKU',{exact:true}).fill('TEA-001');await page.getByRole('button',{name:'Confirm alias',exact:true}).click();
+ await page.getByLabel('Incoming unit',{exact:true}).fill('carton');await page.getByLabel('Master unit',{exact:true}).selectOption('box');await page.getByRole('button',{name:'Confirm unit',exact:true}).click();
+ await page.getByRole('button',{name:'Check changes',exact:true}).click();
+ const decision=page.getByLabel('channel-b status Partially shipped',{exact:true});
+ await expect(decision).toHaveValue('unreviewed');for(const label of groups)await page.getByLabel(label,{exact:true}).check();
+ await expect(page.getByRole('button',{name:'Approve rules & run',exact:true})).toBeDisabled();
+ await decision.selectOption('hold');await expect(page.getByLabel('Confirm hold channel-b Partially shipped',{exact:true})).toBeChecked();
+ for(const label of groups)await page.getByLabel(label,{exact:true}).check();await expect(page.getByRole('button',{name:'Approve rules & run',exact:true})).toBeEnabled();
+ await page.getByLabel('Flow name',{exact:true}).fill('Explicit synthetic status review');await page.getByRole('button',{name:'Check changes',exact:true}).click();
+ await expect(decision).toHaveValue('unreviewed');await expect(page.getByLabel('Confirm hold channel-b Partially shipped',{exact:true})).not.toBeChecked();
+ for(const label of groups)await page.getByLabel(label,{exact:true}).check();await expect(page.getByRole('button',{name:'Approve rules & run',exact:true})).toBeDisabled();
+ await page.screenshot({path:test.info().outputPath('unconfirmed-status-blocked.png'),fullPage:true});
+ await page.getByLabel('Confirm hold channel-b Partially shipped',{exact:true}).check();for(const label of groups)await page.getByLabel(label,{exact:true}).check();
+ await page.getByRole('button',{name:'Approve rules & run',exact:true}).click();await expect(page.getByText('39 = 24 + 3 + 3 + 9',{exact:true})).toBeVisible();
+ await page.getByRole('button',{name:/^Exceptions 9/}).click();await page.getByLabel('Search result rows').fill('Partially shipped');await expect(page.getByText('1–3 of 3',{exact:true})).toBeVisible();
+ await expect(page.locator('tbody tr')).toHaveCount(3);await expect(page.getByText('unknown status',{exact:true})).toHaveCount(3);await page.screenshot({path:test.info().outputPath('explicit-hold-isolated.png'),fullPage:true});
 });

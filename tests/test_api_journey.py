@@ -73,6 +73,8 @@ def approve(
     flow: dict,
     input_hash: str,
     reviewed: list[str] | None = None,
+    *,
+    hold_review: dict | None = None,
 ) -> dict:
     response = client.post(
         f"/api/batches/{batch_id}/approve",
@@ -80,6 +82,8 @@ def approve(
             "flow": flow,
             "reviewed": list(REVIEW_GROUPS if reviewed is None else reviewed),
             "expected_input_hash": input_hash,
+            **({"held_statuses": [{key: x[key] for key in ("channel_id", "field", "value")} for x in hold_review["groups"]],
+                "hold_review_hash": hold_review["snapshot_hash"]} if hold_review else {}),
         },
     )
     assert response.status_code == 200, response.text
@@ -228,7 +232,14 @@ def test_week2_new_status_stays_exception_until_explicitly_excluded(
     assert unknown["count"] == 3
     assert len(unknown["row_ids"]) == 3
 
-    saved_without_rule = approve(client, batch["id"], flow, report["input_hash"])
+    # v0.2.1 strengthens approval: implicit Hold must be rejected, while the
+    # original isolated-result assertions below remain unchanged.
+    blocked = client.post(f"/api/batches/{batch['id']}/approve", json={
+        "flow": flow, "reviewed": REVIEW_GROUPS, "expected_input_hash": report["input_hash"]})
+    assert blocked.status_code == 409, blocked.text
+    assert blocked.json()["code"] == "STATUS_REVIEW_REQUIRED"
+    assert client.app.state.store.list("approval") == []
+    saved_without_rule = approve(client, batch["id"], flow, report["input_hash"], hold_review=report["hold_review"])
     first_run = execute(client, batch["id"], saved_without_rule["id"])
     assert_summary(
         first_run,

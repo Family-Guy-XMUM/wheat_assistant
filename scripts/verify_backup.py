@@ -6,6 +6,7 @@ import os
 import shutil
 import sqlite3
 import tempfile
+from contextlib import closing
 from pathlib import Path
 from unittest.mock import patch
 from fastapi.testclient import TestClient
@@ -18,7 +19,7 @@ def verify(backup):
     with tempfile.TemporaryDirectory(prefix="maizi-restore-check-") as folder:
         restored=Path(folder)/"restored"
         shutil.copytree(backup,restored,ignore=shutil.ignore_patterns("backups",".env"))
-        with sqlite3.connect(restored/"maizi.sqlite") as database:
+        with closing(sqlite3.connect(restored/"maizi.sqlite")) as database:
             assert database.execute("PRAGMA integrity_check").fetchone()[0]=="ok"
             count=database.execute("SELECT COUNT(*) FROM entities").fetchone()[0]
         assets=downloads=completed=0

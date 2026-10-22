@@ -61,8 +61,7 @@ def judge(case,rows,products,spec):
 
 def evaluate(live=False):
     result={"offline":[],"live":[],"http_requests":0,"limit":12,"live_requested":live}
-    with tempfile.TemporaryDirectory(prefix="maizi-model-evaluation-") as directory:
-        store=Store(Path(directory))
+    with tempfile.TemporaryDirectory(prefix="maizi-model-evaluation-") as directory, Store(Path(directory)) as store:
         for case in cases():
             assets,rows,products,golden=material(case)
             oracle=judge(case,rows,products,golden)

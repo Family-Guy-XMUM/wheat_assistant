@@ -191,6 +191,8 @@ def approve(
     flow: dict,
     input_hash: str,
     source_flow_id: str | None = None,
+    *,
+    hold_review: dict | None = None,
 ) -> dict:
     response = client.post(
         f"/api/batches/{batch_id}/approve",
@@ -199,6 +201,8 @@ def approve(
             "reviewed": REVIEW_GROUPS,
             "expected_input_hash": input_hash,
             "source_flow_id": source_flow_id,
+            **({"held_statuses": [{key: x[key] for key in ("channel_id", "field", "value")} for x in hold_review["groups"]],
+                "hold_review_hash": hold_review["snapshot_hash"]} if hold_review else {}),
         },
     )
     assert response.status_code == 200, response.text
@@ -227,7 +231,13 @@ def ready_demo_run(client: TestClient, week: int = 1) -> tuple[dict, dict, dict]
     _, flow = suggested_flow(client, batch["id"])
     report = preflight(client, batch["id"], flow)
     assert report["errors"] == []
-    saved = approve(client, batch["id"], flow, report["input_hash"])
+    confirmation = report["hold_review"] if report["hold_review"]["required"] else None
+    if confirmation:
+        blocked = client.post(f"/api/batches/{batch['id']}/approve", json={
+            "flow": flow, "reviewed": REVIEW_GROUPS, "expected_input_hash": report["input_hash"]})
+        assert blocked.status_code == 409, blocked.text
+        assert blocked.json()["code"] == "STATUS_REVIEW_REQUIRED"
+    saved = approve(client, batch["id"], flow, report["input_hash"], hold_review=confirmation)
     run = create_run(client, batch["id"], saved["id"])
     return batch, saved, run
 

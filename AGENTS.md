@@ -11,3 +11,7 @@ This is the user-authorized build workspace. Shared resource rules are maintaine
 - Preserve every accepted input row and its disposition; unknown states and conversions cannot silently enter picking results.
 - Before any real modification, follow the resource HISTORY/taskbuild recording rules. The coordinator serializes central records; each contributor supplies their own signed engineering notes and exact contribution.
 - Do not publish, push, change repository permissions or fabricate platform evidence.
+
+## Windows v0.2.1 batch (2026-10-22)
+
+User approved the Windows receipt remediation plan. Codex / agent-winfix is the sole writer of production code, shared contracts, configuration, existing tests, packaging and central records for this batch. DeepSeek Harness / agent-contract-tests may only add tests/test_windows_v021.py and tests/test_windows_v021_review.py and provide its own signed handoff. No changes to production code, existing tests, fixtures, shared records or Git by Harness. Read the v0.2.1 contract before writing. No .env reads or provider calls. Coordinator freezes candidate writes before final review; Windows results require a new actual Windows receipt.

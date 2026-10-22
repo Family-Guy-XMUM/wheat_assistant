@@ -64,12 +64,20 @@ class PlanRequest(BaseModel):
     flow: FlowSpec | None = None
     source_flow_id: str | None = None
 
+class HeldStatus(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    channel_id: str
+    field: str
+    value: str
+
 class ApproveRequest(BaseModel):
     flow: FlowSpec
     reviewed: list[str]
     expected_input_hash: str
     source_flow_id: str | None = None
     draft_id: str | None = None
+    held_statuses: list[HeldStatus] = Field(default_factory=list, max_length=10000)
+    hold_review_hash: str | None = None
 
 class RunRequest(BaseModel):
     batch_id: str
