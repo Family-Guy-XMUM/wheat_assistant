@@ -2,8 +2,8 @@
 
 This is the user-authorized build workspace. Shared resource rules are maintained separately in SDC_Resource. Never copy that resource library into this project.
 
-- Coordinator: Codex / agent-handoff; owns backend/, frontend/, scripts/, packaging and shared contracts.
-- DeepSeek Harness may edit only tests/test_engine_contract.py, tests/test_status_guard_contract.py, tests/test_api_journey.py, tests/test_ingestion_security.py, tests/fixtures/golden_cases.json after receiving the contract. No shared files or Git writes.
+- Current hardening coordinator: Codex / agent-audit (user-authorized 2026-10-22); owns API/models/store/frontend/scripts/packaging/shared contracts and central records. Earlier contributions retain their original attribution.
+- DeepSeek Harness hardening unit 1 may edit only backend/maizi/files.py, backend/maizi/exporter.py, tests/test_io_hardening.py and tests/fixtures/io_hardening/. Unit 2 may add tests/test_hardening_acceptance.py after coordinator handoff. No other shared files, original tests, configuration or Git writes. Read the hardening contract first and report actual tool/model identity and hashes.
 - Replit Free develops maizi_status_guard.py; coordinator integrates the verified source unchanged and records provenance.
 - All business inputs must be team-created synthetic data. Do not upload private developer information, credentials, local paths, raw account logs or unrelated files.
 - Store API keys only in ignored local configuration. Never include them in frontend code, logs, test fixtures, screenshots or release bundles.

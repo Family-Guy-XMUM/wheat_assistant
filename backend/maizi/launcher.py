@@ -38,11 +38,18 @@ def main():
         with socket.socket() as probe:
             probe.bind(("127.0.0.1", 0))
             port = probe.getsockname()[1]
-    app = create_app(arguments.data_dir, web)
-    if not arguments.no_browser:
-        threading.Timer(1.2, lambda: webbrowser.open("http://127.0.0.1:" + str(port))).start()
-    print("MaiZi is running at http://127.0.0.1:" + str(port), flush=True)
-    uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning", access_log=False)
+    from platformdirs import user_data_dir
+    from maizi.runtime_lock import data_directory_lock
+    directory = Path(arguments.data_dir or os.getenv("MAIZI_DATA_DIR") or user_data_dir("MaiZi",appauthor=False)).resolve()
+    try:
+        with data_directory_lock(directory):
+            app = create_app(directory, web)
+            if not arguments.no_browser:
+                threading.Timer(1.2, lambda: webbrowser.open("http://127.0.0.1:" + str(port))).start()
+            print("MaiZi is running at http://127.0.0.1:" + str(port), flush=True)
+            uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning", access_log=False)
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
 
 if __name__ == "__main__":
     main()

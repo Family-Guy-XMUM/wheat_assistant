@@ -66,6 +66,7 @@ def process_orders(rows: list[dict], products: list[dict], flow: dict) -> dict:
             "source_row_id": row["source_row_id"], "source_id": row["source_id"],
             "source_name": row.get("source_name", row["source_id"]),
             "sheet": row.get("sheet", ""), "row_number": row.get("row_number"),
+            "row_end_number": row.get("row_end_number", row.get("row_number")),
             "raw": raw, "disposition": "exception", "sku": None, "quantity": None,
             "reasons": [], "events": [], "duplicate_of": None,
         }

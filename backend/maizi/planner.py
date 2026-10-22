@@ -39,12 +39,16 @@ def suggest_flow(assets):
         if asset["role"] == "orders":
             fields = {key: find_column(headers, names, None if key in {"line_id", "date"} else "") for key, names in FIELD_NAMES.items()}
             values = {str(row["data"].get(fields["status"], "")).strip() for row in asset["table"]["records"]}
-            channels[asset["channel_id"]] = {
+            suggested = {
                 "fields": fields,
                 "status_actions": {value: ("include" if value in INCLUDE_CANDIDATES else "exclude")
                                    for value in values if value in INCLUDE_CANDIDATES | EXCLUDE_CANDIDATES},
                 "dedup_mode": "business_key",
             }
+            if asset["channel_id"] in channels:
+                channels[asset["channel_id"]]["status_actions"].update(suggested["status_actions"])
+            else:
+                channels[asset["channel_id"]] = suggested
         elif asset["role"] == "master":
             master_fields = {
                 "sku": find_column(headers, ["sku", "item code", "商品编码"]),
@@ -71,7 +75,8 @@ def propose_live(store, batch, assets, instructions, base_flow):
     today = now()[:10]
     limit = int(os.getenv("LLM_DAILY_CALL_LIMIT", "60"))
     summaries = [{"role": x["role"], "channel_id": x["channel_id"], "profile": x["profile"]} for x in assets]
-    request_data = {"instructions": instructions, "inputs": summaries, "draft": base_flow}
+    request_data = {"instructions": instructions, "inputs": summaries, "draft": base_flow,
+                    "response_schema": ModelPlan.model_json_schema()}
     compact = json.dumps(request_data, ensure_ascii=False)
     if len(compact) > 40000:
         raise ValueError("The planning profile is too large; narrow the selected columns")
@@ -83,6 +88,8 @@ def propose_live(store, batch, assets, instructions, base_flow):
         "master_fields, output_columns, date_from, date_to. Reference only real headers and master SKU candidates. "
         "Do not invent conversion factors or silently include Partially shipped/new statuses. "
         "Leave ambiguous aliases/statuses unmapped and put specific questions in questions. "
+        "Hold means omit that status key entirely; never output a 'hold' status action. "
+        "Use the exact supplied response_schema, including field names, enum values and nesting. "
         "Do not confuse ordered quantity with shipped quantity. All proposed rules require human approval."
     )
     messages = [{"role": "system", "content": system}, {"role": "user", "content": compact}]
@@ -121,9 +128,10 @@ def propose_live(store, batch, assets, instructions, base_flow):
                     "prompt_hash": digest(compact)}
         except (json.JSONDecodeError, KeyError, ValidationError, TypeError) as exc:
             last_error = "Model output did not match the required JSON structure"
-            store.put("usage", usage["id"], {**usage, "status": "invalid_output"})
+            issues = [{"path": list(item["loc"]), "type": item["type"]} for item in exc.errors()] if isinstance(exc, ValidationError) else [{"type": type(exc).__name__}]
+            store.put("usage", usage["id"], {**usage, "status": "invalid_output", "validation_issues": issues})
             messages.extend([{"role": "assistant", "content": locals().get("content", "")[:12000]},
-                             {"role": "user", "content": "Return only the required JSON object. Keep all schema keys valid."}])
+                             {"role": "user", "content": "Return only the required JSON object matching response_schema. Omit held statuses. Correct these validation issues: " + json.dumps(issues)}])
         except httpx.TimeoutException:
             store.put("usage", usage["id"], {**usage, "status": "timeout"})
             raise ValueError("Model request timed out; billing status may be unknown")
