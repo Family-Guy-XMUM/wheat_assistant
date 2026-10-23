@@ -6,7 +6,7 @@
 
 ## 1. 安装和自动复验
 
-1. 将源码 ZIP完整解压到新的中文、空格目录，例如 `C:\MaiZi 复验\MaiZi_Assistant`。保留旧版本目录和旧回执，不复制 Mac `.venv`、`node_modules`、私有 `.env` 或旧数据库。
+1. 将源码 ZIP完整解压到新的中文、空格目录，例如 `C:\wheat_assistant 复验\wheat_assistant`。保留旧版本目录和旧回执，不复制 Mac `.venv`、`node_modules`、私有 `.env` 或旧数据库。
 2. 准备 uv 和 Node.js 22+（含npm）。运行 `Setup_Windows.bat`；它用锁文件准备 Python 3.12，即使系统另有Python也不改用它。首次下载需要网络。
 3. 再运行 `Setup_Windows.bat`，确认已有 `.env` 不被覆盖。不需要填写key。
 4. 运行 `Validate_Windows.bat`，或在终端运行 `Validate_Windows.bat --no-pause`。
@@ -20,13 +20,13 @@
 - `windows-performance.json` 有 **3个完整试次**、`complete_trials: 3`、清理全部成功、八表/10000追溯/5000 SKU/内存采样通过，导出中位数 ≤10秒。缺数据、WinError32或不完整试次均不算通过。
 - 各报告的源码指纹一致，原生包SHA与实际文件一致。`base_commit`是开发基线，工作区候选还由 `candidate_sha256` 标识，不能把基线SHA当成新版本commit。
 
-原生包位置为 `dist/MaiZi-Windows-AMD64-v0.2.1.zip`，以程序实际输出和报告中的名称为准。CI配置不代表CI已经运行或实机通过。
+原生包位置为 `dist/wheat_assistant-Windows-AMD64-v0.2.1.zip`，以程序实际输出和报告中的名称为准。CI配置不代表CI已经运行或实机通过。
 
 ## 2. 人工复验清单
 
 请在本批目录新建 `windows-manual-checklist.md`，记录日期、实际操作者的项目代号、工具执行与真人复核是否分别完成。逐项填写通过/失败/未执行，不替他人签名。
 
-- [ ] `Start_MaiZi.bat` 自动打开网页，无key可用。确认显示v0.2.1，输入为合成样例。
+- [ ] `Start_wheat_assistant.bat` 自动打开网页，无key可用。确认显示v0.2.1，输入为合成样例。
 - [ ] Week1：新建流程，明确确认 `Jasmine500 → TEA-001`、`carton → box`；检查六组并运行。结果 `36 = 24 + 3 + 3 + 6`，规则v1。
 - [ ] 导出并用实际Excel打开八张表；TEA-001=21、SOAP-002=33、RICE-003=84。保留Excel保护视图，不关闭系统保护。
 - [ ] Week2明确复用v1：`Partially shipped` 初始为 **Unreviewed**；即使勾选六组，运行按钮仍禁用。
@@ -40,12 +40,12 @@
 原生依赖隔离可在该目录的PowerShell中使用**本进程范围**PATH，不修改系统配置：
 
 ```powershell
-$maiziOldPath = $env:PATH
+$wheat_assistantOldPath = $env:PATH
 try {
     $env:PATH = Join-Path $env:SystemRoot 'System32'
-    .\MaiZi.exe --data-dir .\synthetic-data --port 8765 --strict-port
+    .\wheat_assistant.exe --data-dir .\synthetic-data --port 8765 --strict-port
 } finally {
-    $env:PATH = $maiziOldPath
+    $env:PATH = $wheat_assistantOldPath
 }
 ```
 
@@ -56,7 +56,7 @@ try {
 交回本次目录内的四份JSON、人工清单、必要的应用/Excel合成数据截图，以及新原生ZIP或单独明确其未附。通过PowerShell核对ZIP：
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\dist\MaiZi-Windows-AMD64-v0.2.1.zip
+Get-FileHash -Algorithm SHA256 .\dist\wheat_assistant-Windows-AMD64-v0.2.1.zip
 ```
 
 原始控制台/浏览器轨迹及 `.runtime/windows-validation/`、`.runtime/release-private/`、`.runtime/benchmark-private/` 日志可能含私人目录，保留本机排查，未经脱敏不要分享。不要发送 `.env`、`synthetic-data`、实际运行数据库、`.git`、缓存或整个开发目录。

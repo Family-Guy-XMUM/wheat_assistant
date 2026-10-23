@@ -15,10 +15,10 @@ from pathlib import Path
 
 import httpx
 from openpyxl import load_workbook
-from maizi.process_control import ManagedProcess
-from maizi.local_network import bind_loopback
-from maizi.release_evidence import attempt_id, candidate_info, report_path, write_report
-from maizi.runtime_environment import child_environment
+from wheat_assistant.process_control import ManagedProcess
+from wheat_assistant.local_network import bind_loopback
+from wheat_assistant.release_evidence import attempt_id, candidate_info, report_path, write_report
+from wheat_assistant.runtime_environment import child_environment
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -135,13 +135,13 @@ def verify(bundle=None):
     try:
         if bundle:
             result["bundle_sha256"] = hashlib.sha256(Path(bundle).read_bytes()).hexdigest()
-        with private.open("wb") as log, tempfile.TemporaryDirectory(prefix="maizi release 合成 ") as temporary:
+        with private.open("wb") as log, tempfile.TemporaryDirectory(prefix="wheat_assistant release 合成 ") as temporary:
             folder = Path(temporary)
             if bundle:
                 with zipfile.ZipFile(bundle) as archive:
                     require(not any(Path(name).is_absolute() or ".." in Path(name).parts or "\\" in name or ":" in name for name in archive.namelist()), "Unsafe bundle member")
                     archive.extractall(folder / "native")
-                binary = folder / "native" / "MaiZi" / ("MaiZi.exe" if os.name == "nt" else "MaiZi")
+                binary = folder / "native" / "wheat_assistant" / ("wheat_assistant.exe" if os.name == "nt" else "wheat_assistant")
                 if os.name != "nt":
                     binary.chmod(0o755)
                 info = json.loads((binary.parent / "build-info.json").read_text(encoding="utf-8"))
@@ -149,7 +149,7 @@ def verify(bundle=None):
                 command = [str(binary)]
                 environment = child_environment(native=True)
             else:
-                command = [sys.executable, "-m", "maizi.launcher"]
+                command = [sys.executable, "-m", "wheat_assistant.launcher"]
                 environment = child_environment()
                 environment["PYTHONPATH"] = str(ROOT / "backend")
             environment.update({"LLM_API_KEY":"", "LLM_BASE_URL":"", "LLM_MODEL":""})

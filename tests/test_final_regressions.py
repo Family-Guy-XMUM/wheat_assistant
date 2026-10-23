@@ -10,7 +10,7 @@ def local(tmp_path,monkeypatch):
     monkeypatch.setattr(dotenv,"load_dotenv",lambda *a,**k:False)
     for key in ("LLM_API_KEY","LLM_BASE_URL","LLM_MODEL"):
         monkeypatch.setenv(key,"")
-    from maizi.api import create_app
+    from wheat_assistant.api import create_app
     with TestClient(create_app(tmp_path),raise_server_exceptions=False) as client:
         yield client
 
@@ -61,7 +61,7 @@ def test_failed_new_export_keeps_default_old_download(local,monkeypatch):
     _,run,request,first=exported(local)
     url=f"/api/runs/{run['id']}/download"
     old=local.get(url).content
-    from maizi import api
+    from wheat_assistant import api
     monkeypatch.setattr(api.exporter_module,"EXPORTER_VERSION",3)
     def fail(*a,**k):raise ValueError("Synthetic new exporter failure")
     monkeypatch.setattr(api,"export_workbook",fail)
@@ -80,20 +80,20 @@ def test_current_run_activity_includes_handoff_but_no_later_duplicate_upload(loc
     assert not any(x["action"]=="duplicate_upload" for x in activities)
 
 def test_missing_revision_legacy_schema_is_migrated_after_verified_backup(tmp_path):
-    from maizi.store import Store
-    database=tmp_path/"maizi.sqlite"
+    from wheat_assistant.store import Store
+    database=tmp_path/"wheat_assistant.sqlite"
     with sqlite3.connect(database) as connection:
         connection.execute("CREATE TABLE entities (id VARCHAR PRIMARY KEY, kind VARCHAR, payload JSON, created VARCHAR)")
         connection.execute("INSERT INTO entities VALUES ('old','flow','{\"id\":\"old\",\"sentinel\":true}','2026-01-01')")
     store=Store(tmp_path)
     assert store.get("flow","old")["sentinel"] is True
-    backup=next((tmp_path/"backups").glob("hardening-v2-*/maizi.sqlite"))
+    backup=next((tmp_path/"backups").glob("hardening-v2-*/wheat_assistant.sqlite"))
     with sqlite3.connect(backup) as connection:
         assert connection.execute("PRAGMA integrity_check").fetchone()[0]=="ok"
         assert "revision" not in {x[1] for x in connection.execute("PRAGMA table_info(entities)")}
 
 def test_input_diff_uses_source_structure_sets_and_reports_removed_source():
-    from maizi.workflows import review_diff
+    from wheat_assistant.workflows import review_diff
     spec={"channels":{},"master_fields":{},"aliases":{},"unit_aliases":{},"output_columns":[]}
     def asset(name,source,headers):return {"role":"orders","name":name,"channel_id":source,"hash":name,"table":{"headers":headers}}
     before=[asset("a","same",["A","B"]),asset("b","same",["A","C"]),asset("gone","removed",["A"])]

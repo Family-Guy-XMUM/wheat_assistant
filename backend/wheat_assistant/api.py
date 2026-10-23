@@ -13,20 +13,20 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from platformdirs import user_data_dir
 from pydantic import BaseModel, Field
 
-from maizi import __version__
-from maizi.execution import execute_isolated
-from maizi.exporter import export_workbook
-from maizi import exporter as exporter_module
-from maizi.files import MAX_BYTES, extract_products, parse_table, profile
-from maizi.models import ApproveRequest, ExportApproval, FlowSpec, PlanRequest, REVIEW_GROUPS, RunRequest
-from maizi.planner import configured, propose_live, suggest_flow
-from maizi.samples import demo_files
-from maizi.store import Store, digest, now
-from maizi.status_review import confirm_holds, hold_review
-from maizi.workflows import metadata, review_diff, table_identity
+from wheat_assistant import __version__
+from wheat_assistant.execution import execute_isolated
+from wheat_assistant.exporter import export_workbook
+from wheat_assistant import exporter as exporter_module
+from wheat_assistant.files import MAX_BYTES, extract_products, parse_table, profile
+from wheat_assistant.models import ApproveRequest, ExportApproval, FlowSpec, PlanRequest, REVIEW_GROUPS, RunRequest
+from wheat_assistant.planner import configured, propose_live, suggest_flow
+from wheat_assistant.samples import demo_files
+from wheat_assistant.store import Store, digest, now
+from wheat_assistant.status_review import confirm_holds, hold_review
+from wheat_assistant.workflows import metadata, review_diff, table_identity
+from wheat_assistant.runtime_paths import data_directory
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(PROJECT_ROOT / ".env", override=False)
@@ -40,7 +40,7 @@ class DemoRequest(BaseModel):
     week: int = Field(ge=1, le=3)
 
 def create_app(data_dir=None, frontend_dir=None):
-    directory = Path(data_dir or os.getenv("MAIZI_DATA_DIR") or user_data_dir("MaiZi", appauthor=False)).resolve()
+    directory = data_directory(data_dir)
     store = Store(directory)
     execution_lock = threading.Lock()
     export_lock = threading.Lock()
@@ -61,7 +61,7 @@ def create_app(data_dir=None, frontend_dir=None):
         finally:
             store.close()
 
-    app = FastAPI(title="MaiZi Assistant", version=__version__, lifespan=lifespan)
+    app = FastAPI(title="wheat_assistant", version=__version__, lifespan=lifespan)
     app.state.store = store
     instance_id = uuid.uuid4().hex
 
@@ -167,7 +167,7 @@ def create_app(data_dir=None, frontend_dir=None):
         return {key: asset[key] for key in ("id", "name", "role", "channel_id", "hash", "size", "profile")}
 
     def inspect(batch, spec, source_flow_id=None):
-        from maizi.status_guard import check_status_coverage
+        from wheat_assistant.status_guard import check_status_coverage
         assets = assets_for(batch, validate_parser=True)
         rows = all_rows(assets)
         errors = []
@@ -579,7 +579,7 @@ def create_app(data_dir=None, frontend_dir=None):
     def download(identifier: str, export_id: str | None = None):
         run = store.get("run", identifier)
         path, _ = approved_artifact(run, export_id)
-        return FileResponse(path, filename="MaiZi_Picking_Preparation.xlsx")
+        return FileResponse(path, filename="wheat_assistant_Picking_Preparation.xlsx")
 
     @app.post("/api/runs/{identifier}/handoff")
     def handoff(identifier: str):

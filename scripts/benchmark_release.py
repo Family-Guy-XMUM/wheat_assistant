@@ -15,12 +15,12 @@ from unittest.mock import patch
 import psutil
 from fastapi.testclient import TestClient
 from openpyxl import load_workbook
-from maizi.release_evidence import attempt_id, candidate_info, report_path, write_report
+from wheat_assistant.release_evidence import attempt_id, candidate_info, report_path, write_report
 
 for key in ("LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL"):
     os.environ[key] = ""
 with patch("dotenv.load_dotenv", return_value=False):
-    from maizi.api import create_app
+    from wheat_assistant.api import create_app
 
 ROOT = Path(__file__).resolve().parents[1]
 GROUPS = ["fields", "statuses", "products", "units", "duplicates", "output"]
@@ -54,7 +54,7 @@ def trial():
     sampler = threading.Thread(target=sample, daemon=True)
     sampler.start()
     try:
-        with tempfile.TemporaryDirectory(prefix="maizi-benchmark-") as folder:
+        with tempfile.TemporaryDirectory(prefix="wheat_assistant-benchmark-") as folder:
             item["phase"] = "opening_app"
             with TestClient(create_app(Path(folder))) as client:
                 def post(url, data):

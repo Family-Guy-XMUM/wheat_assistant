@@ -1,6 +1,7 @@
 {
-  "module": "backend/maizi/status_guard.py",
+  "module": "backend/wheat_assistant/status_guard.py",
   "project_name": "MaiZi Status Guard",
+  "application_name": "wheat_assistant",
   "platform": "Replit Starter / Free",
   "source_sha256": "d19bcac24b13922602085115de3f639b8a768079a28c44b5c89a7d9e332cb98f",
   "development_date_myt": "2026-10-21",

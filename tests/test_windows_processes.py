@@ -9,14 +9,14 @@ from pathlib import Path
 
 import pytest
 
-from maizi.process_control import ManagedProcess
-from maizi.release_evidence import report_path, write_report
+from wheat_assistant.process_control import ManagedProcess
+from wheat_assistant.release_evidence import report_path, write_report
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def load_script(name):
-    spec = importlib.util.spec_from_file_location('maizi_test_'+name, ROOT/'scripts'/f'{name}.py')
+    spec = importlib.util.spec_from_file_location('wheat_assistant_test_'+name, ROOT/'scripts'/f'{name}.py')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module

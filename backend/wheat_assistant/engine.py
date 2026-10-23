@@ -7,7 +7,7 @@ from collections import Counter, defaultdict
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
-from maizi.numbers import positive_decimal
+from wheat_assistant.numbers import positive_decimal
 
 def text(value):
     return "" if value is None else str(value).strip()

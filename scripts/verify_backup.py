@@ -10,16 +10,17 @@ from contextlib import closing
 from pathlib import Path
 from unittest.mock import patch
 from fastapi.testclient import TestClient
+from wheat_assistant.runtime_paths import database_path
 
 def verify(backup):
     for key in ("LLM_API_KEY","LLM_BASE_URL","LLM_MODEL"):
         os.environ[key]=""
     with patch("dotenv.load_dotenv",return_value=False):
-        from maizi.api import create_app
-    with tempfile.TemporaryDirectory(prefix="maizi-restore-check-") as folder:
+        from wheat_assistant.api import create_app
+    with tempfile.TemporaryDirectory(prefix="wheat_assistant-restore-check-") as folder:
         restored=Path(folder)/"restored"
         shutil.copytree(backup,restored,ignore=shutil.ignore_patterns("backups",".env"))
-        with closing(sqlite3.connect(restored/"maizi.sqlite")) as database:
+        with closing(sqlite3.connect(database_path(restored))) as database:
             assert database.execute("PRAGMA integrity_check").fetchone()[0]=="ok"
             count=database.execute("SELECT COUNT(*) FROM entities").fetchone()[0]
         assets=downloads=completed=0

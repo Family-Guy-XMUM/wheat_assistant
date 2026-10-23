@@ -4,11 +4,11 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from maizi.engine import process_orders
-from maizi.files import profile
-from maizi.models import FlowSpec
-from maizi.planner import propose_live, suggest_flow
-from maizi.store import Store
+from wheat_assistant.engine import process_orders
+from wheat_assistant.files import profile
+from wheat_assistant.models import FlowSpec
+from wheat_assistant.planner import propose_live, suggest_flow
+from wheat_assistant.store import Store
 
 def cases():
     base={"Order ID":"O1","Line":"1","Item Code":"S1","Qty":"2","Unit":"piece","Order Status":"Confirmed"}
@@ -61,7 +61,7 @@ def judge(case,rows,products,spec):
 
 def evaluate(live=False):
     result={"offline":[],"live":[],"http_requests":0,"limit":12,"live_requested":live}
-    with tempfile.TemporaryDirectory(prefix="maizi-model-evaluation-") as directory, Store(Path(directory)) as store:
+    with tempfile.TemporaryDirectory(prefix="wheat_assistant-model-evaluation-") as directory, Store(Path(directory)) as store:
         for case in cases():
             assets,rows,products,golden=material(case)
             oracle=judge(case,rows,products,golden)

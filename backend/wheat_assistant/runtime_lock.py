@@ -6,7 +6,9 @@ from pathlib import Path
 @contextmanager
 def data_directory_lock(root: Path):
     root.mkdir(parents=True,exist_ok=True)
-    handle=(root/".maizi-instance.lock").open("a+b")
+    legacy = root / ".maizi-instance.lock"
+    lock_file = legacy if legacy.exists() or (root / "maizi.sqlite").is_file() else root / ".wheat_assistant-instance.lock"
+    handle=lock_file.open("a+b")
     try:
         handle.seek(0,2)
         if handle.tell()==0:
@@ -20,7 +22,7 @@ def data_directory_lock(root: Path):
                 import fcntl
                 fcntl.flock(handle.fileno(),fcntl.LOCK_EX|fcntl.LOCK_NB)
         except OSError as error:
-            raise ValueError("MaiZi is already running for this data directory. Stop its server console before starting again.") from error
+            raise ValueError("wheat_assistant is already running for this data directory. Stop its server console before starting again.") from error
         try:
             yield
         finally:

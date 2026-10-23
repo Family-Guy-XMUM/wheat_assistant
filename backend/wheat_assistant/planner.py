@@ -4,7 +4,7 @@ import re
 
 import httpx
 
-from maizi.models import FlowSpec
+from wheat_assistant.models import FlowSpec
 from pydantic import BaseModel, Field, ValidationError
 
 class ModelPlan(BaseModel):
@@ -12,7 +12,7 @@ class ModelPlan(BaseModel):
     explanation: str = Field(default="", max_length=12000)
     questions: list[str] = Field(default_factory=list, max_length=30)
 
-from maizi.store import digest, now
+from wheat_assistant.store import digest, now
 
 FIELD_NAMES = {
     "order_id": ["order id", "orderno", "ref", "订单号", "order_id"],

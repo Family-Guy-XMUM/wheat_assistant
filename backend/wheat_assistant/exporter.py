@@ -10,7 +10,7 @@ from pathlib import Path
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 
-from maizi.files import MAX_CELL_CHARS
+from wheat_assistant.files import MAX_CELL_CHARS
 
 EXPORTER_VERSION = 2
 SHEET_NAMES = [
@@ -313,8 +313,8 @@ def export_workbook(
         row_index += 1
     finish(audit)
 
-    workbook.properties.creator = "MaiZi"
-    workbook.properties.lastModifiedBy = "MaiZi"
+    workbook.properties.creator = "wheat_assistant"
+    workbook.properties.lastModifiedBy = "wheat_assistant"
     expected_rows = _expected_row_counts(result, snapshot)
 
     temporary = None

@@ -44,7 +44,7 @@ def api_module(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setattr(dotenv, "load_dotenv", lambda *args, **kwargs: False)
 
-    from maizi import api
+    from wheat_assistant import api
 
     def forbidden_live(*args, **kwargs):
         raise AssertionError("Live model calls are forbidden in acceptance tests")
@@ -914,7 +914,7 @@ def test_legacy_parser_table_mismatch_requires_new_batch(client: TestClient) -> 
 def test_store_backup_integrity_before_upgrade(
     tmp_path: Path, app_factory
 ) -> None:
-    database = tmp_path / "maizi.sqlite"
+    database = tmp_path / "wheat_assistant.sqlite"
     connection = sqlite3.connect(database)
     connection.execute("CREATE TABLE sentinel (value TEXT)")
     connection.execute("INSERT INTO sentinel VALUES ('synthetic-pre-upgrade')")
@@ -931,7 +931,7 @@ def test_store_backup_integrity_before_upgrade(
     assert marker["verified"] is True
     assert marker["backup"] == backups[0].name
 
-    backup_db = backups[0] / "maizi.sqlite"
+    backup_db = backups[0] / "wheat_assistant.sqlite"
     with sqlite3.connect(backup_db) as mirrored:
         assert mirrored.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
         assert mirrored.execute("SELECT value FROM sentinel").fetchone()[0] == (

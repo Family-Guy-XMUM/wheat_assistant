@@ -1,8 +1,8 @@
-"""Independent contract tests for ``maizi.engine.process_orders``.
+"""Independent contract tests for ``wheat_assistant.engine.process_orders``.
 
 These tests are written from CONTRACT.md only. Every row, product, channel and
 value below is synthetic. Assertions use stable disposition names and reason
-shape, never human-readable reason prose. If ``maizi.engine`` is missing the
+shape, never human-readable reason prose. If ``wheat_assistant.engine`` is missing the
 module import must fail; this file deliberately does not skip or ship a stub.
 """
 
@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from maizi.engine import process_orders
+from wheat_assistant.engine import process_orders
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "golden_cases.json"
 

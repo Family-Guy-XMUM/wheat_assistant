@@ -7,10 +7,10 @@ from decimal import Decimal
 
 import pytest
 
-from maizi.engine import process_orders
-from maizi.execution import execute_isolated
-from maizi.files import parse_table
-from maizi.numbers import positive_decimal
+from wheat_assistant.engine import process_orders
+from wheat_assistant.execution import execute_isolated
+from wheat_assistant.files import parse_table
+from wheat_assistant.numbers import positive_decimal
 
 def setup_rows(count=1, products_count=1):
     products=[{"sku":f"SKU-{i:04d}","name":f"Synthetic product {i}","base_unit":"piece","unit_factors":{"box":"12"}} for i in range(products_count)]
@@ -53,9 +53,9 @@ def test_malformed_workbook_xml_is_an_input_error():
         parse_table(output.getvalue(),"bad.xlsx","orders")
 
 def test_provider_invalid_schema_repairs_once_without_executing(tmp_path, monkeypatch):
-    import maizi.planner as planner
-    from maizi.models import FlowSpec
-    from maizi.store import Store
+    import wheat_assistant.planner as planner
+    from wheat_assistant.models import FlowSpec
+    from wheat_assistant.store import Store
     for name,value in {"LLM_BASE_URL":"https://invalid.example/v1","LLM_MODEL":"test-model","LLM_API_KEY":"synthetic-test-token"}.items():monkeypatch.setenv(name,value)
     calls=[]
     class Response:
@@ -81,8 +81,8 @@ def test_provider_invalid_schema_repairs_once_without_executing(tmp_path, monkey
 
 def test_provider_timeout_is_visible_and_not_retried(tmp_path,monkeypatch):
     import httpx
-    import maizi.planner as planner
-    from maizi.store import Store
+    import wheat_assistant.planner as planner
+    from wheat_assistant.store import Store
     for name in ["LLM_BASE_URL","LLM_MODEL","LLM_API_KEY"]:monkeypatch.setenv(name,"synthetic")
     class Client:
         def __init__(self,*args,**kwargs):pass
@@ -96,8 +96,8 @@ def test_provider_timeout_is_visible_and_not_retried(tmp_path,monkeypatch):
     assert [x["status"] for x in store.list("usage")]==["timeout"]
 
 def test_export_preserves_large_integers_and_refuses_truncation(tmp_path):
-    from maizi.exporter import export_workbook, literal
-    from maizi.models import FlowSpec
+    from wheat_assistant.exporter import export_workbook, literal
+    from wheat_assistant.models import FlowSpec
     from openpyxl import load_workbook, Workbook
     rows,products,flow=setup_rows()
     result=process_orders(rows,products,flow)

@@ -7,8 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from maizi import __version__
-from maizi.release_evidence import attempt_id, candidate_info, write_report
+from wheat_assistant import __version__
+from wheat_assistant.release_evidence import attempt_id, candidate_info, write_report
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -21,7 +21,7 @@ def main():
     report_dir.mkdir(parents=True, exist_ok=False)
     private = ROOT / ".runtime" / "windows-validation" / (attempt+".log")
     private.parent.mkdir(parents=True, exist_ok=True)
-    bundle = ROOT / "dist" / ("MaiZi-Windows-"+platform.machine()+"-v"+__version__+".zip")
+    bundle = ROOT / "dist" / ("wheat_assistant-Windows-"+platform.machine()+"-v"+__version__+".zip")
     source_report = report_dir / "windows-source-release.json"
     native_report = report_dir / "windows-native-release.json"
     performance_report = report_dir / "windows-performance.json"
@@ -40,7 +40,7 @@ def main():
               "manual_start_stop":"pending_operator_confirmation", "manual_excel":"pending_operator_confirmation"}
     target = report_dir / "windows-validation.json"
     environment = os.environ.copy()
-    environment.update({"LLM_API_KEY":"", "LLM_MODEL":"", "LLM_BASE_URL":"", "PYTHONUTF8":"1", "MAIZI_BROWSER_CHANNEL":"chromium"})
+    environment.update({"LLM_API_KEY":"", "LLM_MODEL":"", "LLM_BASE_URL":"", "PYTHONUTF8":"1", "WHEAT_ASSISTANT_BROWSER_CHANNEL":"chromium"})
     write_report(target, report)
     with private.open("w", encoding="utf-8") as log:
         for index, (name, command) in enumerate(steps):

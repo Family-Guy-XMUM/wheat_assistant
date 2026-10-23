@@ -4,7 +4,7 @@ All examples are synthetic. Coordinator owns this contract; tests may depend on 
 
 ## Pure engine
 
-`from maizi.engine import process_orders`
+`from wheat_assistant.engine import process_orders`
 
 `process_orders(rows, products, flow) -> dict`
 
@@ -20,7 +20,7 @@ Rules: unknown/missing status -> exception. Known excluded status -> excluded, w
 
 ## Replit status guard
 
-`from maizi.status_guard import check_status_coverage`
+`from wheat_assistant.status_guard import check_status_coverage`
 
 `check_status_coverage(channels, rows) -> {rows_checked,covered,affected_row_ids,issues,unknown_values}`.
 
@@ -63,7 +63,7 @@ New approvals require an explicit decision for every status held by Status Guard
 - ApproveRequest adds `held_statuses: [{channel_id, field, value}] = []` and `hold_review_hash: string|null = null`. Keys must exactly match current groups without duplicates; a required confirmation must have the current snapshot hash. Missing, stale or extraneous confirmation returns HTTP409 with a readable detail and code STATUS_REVIEW_REQUIRED. No approval, run or activity is created on rejection. No holds: original request shape stays valid.
 - Newly saved flow/approval envelopes add `approval_policy_version=2`, held_statuses and hold_review_hash; existing spec_hash, rule/run snapshot and approval_request_hash algorithms stay unchanged. Approval-status/idempotent lookup must additionally match the policy and explicit confirmation, and cannot reuse an old approval lacking it as a new approval. Legacy approvals/results are not rewritten; pre-existing compatible runs retain their original recovery behavior. Every new approval must meet this policy.
 - Changing batch, input, rules or source version clears frontend Hold confirmations and all six review checks. New Hold confirmation alone does not change FlowSpec/rule_version. Backend execution verifies explicit confirmation for policy2 snapshots; legacy snapshots follow their original policy.
-- `maizi.runtime_environment.child_environment(environ=None, *, native=False, windows=None)` builds an allowlisted environment. Windows names compare case-insensitively; outputs use canonical keys, including SystemRoot. Worker keeps allowed PATH; native PATH is actual SystemRoot/System32 on Windows and /usr/bin:/bin on POSIX. SystemRoot missing on Windows raises a safe ValueError. No model credentials/private variables are inherited.
+- `wheat_assistant.runtime_environment.child_environment(environ=None, *, native=False, windows=None)` builds an allowlisted environment. Windows names compare case-insensitively; outputs use canonical keys, including SystemRoot. Worker keeps allowed PATH; native PATH is actual SystemRoot/System32 on Windows and /usr/bin:/bin on POSIX. SystemRoot missing on Windows raises a safe ValueError. No model credentials/private variables are inherited.
 - `Store.close()` idempotently disposes pooled connections after sessions finish; FastAPI lifespan closes even on startup error. Raw sqlite3 connections close explicitly. No DB schema change is required.
 - Launcher `--strict-port` rejects occupied requested ports. Health adds a per-instance random instance_id. Source/native verification proves separate instance IDs, data-directory locking using another port, three graceful stop/restart cycles and exact-port reuse. Access-denied is not port-release evidence; forced cleanup is a failed graceful-stop check.
 

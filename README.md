@@ -1,6 +1,10 @@
-# MaiZi — weekly order preparation (0.2.1)
+# wheat — weekly order preparation (0.2.1)
+
+The interface brand is `wheat`; the repository, source package and executable use `wheat_assistant`.
 
 A local web prototype for small wholesalers: combine channel order files, confirm business rules, prepare warehouse picking data, and reuse the flow next week. Only team-created synthetic business data is used in the demo.
+
+The application and source package were renamed from MaiZi to `wheat_assistant` on 2026-10-23. Earlier verification receipts retain their original names and hashes. Rebuilt artifacts use the new name; earlier Windows and live-model limitations still apply.
 
 ## Run from source
 
@@ -10,10 +14,10 @@ Requires Python 3.12+, uv, and Node.js 22+. Commands run from this repository:
 uv sync --frozen
 npm --prefix frontend ci
 npm --prefix frontend run build
-uv run python -m maizi.launcher
+uv run python -m wheat_assistant.launcher
 ```
 
-The browser opens at `http://127.0.0.1:8765`. If that port is busy the launcher chooses another local port. Close the terminal to stop. After initial setup, use `Start_MaiZi.command` on macOS or `Start_MaiZi.bat` on Windows. Python source mode is the reproducible fallback for unsigned development binaries.
+The browser opens at `http://127.0.0.1:8765`. If that port is busy the launcher chooses another local port. Close the terminal to stop. After initial setup, use `Start_wheat_assistant.command` on macOS or `Start_wheat_assistant.bat` on Windows. Python source mode is the reproducible fallback for unsigned development binaries.
 
 ### Windows: first setup, start and stop
 
@@ -21,25 +25,25 @@ Use a clean source checkout on the Windows computer. Do not copy the Mac `.venv`
 
 1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and [Node.js 22+ including npm](https://nodejs.org/en/download). Reopen your terminal after installation. Network access is required for first setup; uv may download Python 3.12.
 2. Double-click **`Setup_Windows.bat`** once. It prepares the Windows Python environment from `uv.lock`, installs frontend packages from the lockfile and builds the interface. It copies `.env.example` only when `.env` does not exist; your existing key configuration is preserved.
-3. Double-click **`Start_MaiZi.bat`** for daily use. Keep its console open. The browser opens automatically; use the address printed there if port 8765 is occupied.
+3. Double-click **`Start_wheat_assistant.bat`** for daily use. Keep its console open. The browser opens automatically; use the address printed there if port 8765 is occupied.
 4. To **stop**, press **Ctrl+C in that console**. If Windows asks whether to terminate the batch job, enter **Y**. Closing the browser tab alone does not stop the server. Start again with the same BAT file.
 
 Equivalent commands from Command Prompt in this folder:
 
 ```bat
 Setup_Windows.bat
-Start_MaiZi.bat
+Start_wheat_assistant.bat
 ```
 
-In PowerShell, use `./Setup_Windows.bat` and `./Start_MaiZi.bat`. If Windows hides file extensions, look for the Windows Batch File type rather than opening the script in a text editor. No administrator privileges are requested by these scripts.
+In PowerShell, use `./Setup_Windows.bat` and `./Start_wheat_assistant.bat`. If Windows hides file extensions, look for the Windows Batch File type rather than opening the script in a text editor. No administrator privileges are requested by these scripts.
 
-For a non-interactive setup check, use `Setup_Windows.bat --no-pause`, then `Start_MaiZi.bat --check`. The latter checks source-launch prerequisites without starting the server. Windows CI is configured to run these commands; **The v0.2.0 Windows receipt failed overall; this v0.2.1 candidate still needs its own Windows receipt**. The app's synthetic demos work without an API key; configure live AI only in your own local `.env`.
+For a non-interactive setup check, use `Setup_Windows.bat --no-pause`, then `Start_wheat_assistant.bat --check`. The latter checks source-launch prerequisites without starting the server. Windows CI is configured to run these commands; **The v0.2.0 Windows receipt failed overall; this v0.2.1 candidate still needs its own Windows receipt**. The app's synthetic demos work without an API key; configure live AI only in your own local `.env`.
 
 For the Windows operator handoff, run `Validate_Windows.bat` after setup and follow [WINDOWS_VALIDATION.md](WINDOWS_VALIDATION.md). It builds a Windows native ZIP on that computer and verifies source and independently extracted native applications over real local HTTP. Each attempt writes eight-stage and source/native/performance receipts under `output/verification/v0.2.1/<attempt-id>/`; previous receipts stay intact. Share only the sanitized JSON reports and manual checklist; keep the detailed local log private. A source ZIP is not a tested Windows executable.
 
 Optional live AI: copy `.env.example` to `.env` and configure `LLM_BASE_URL`, `LLM_MODEL`, and `LLM_API_KEY`. It uses the OpenAI-compatible chat-completions protocol, through the local backend. Keys never go to the frontend or the Replit module. No key is distributed. Header-name suggestions and all deterministic processing work without a model; that mode is explicitly labeled. Live planning sends bounded file profiles and samples to your configured provider. Default limit: 60 requests/day, 45-second timeout, at most one JSON repair attempt. Provider usage and availability depend on your own account.
 
-Data persists in the operating system's MaiZi application-data directory, or `MAIZI_DATA_DIR` when configured. Input files remain intact; results are separate. Stop the app before backing up that directory. Before the first v0.2 opening of an existing database, the app creates a verified SQLite backup and copies original files and artifacts under that directory's `backups/`; it retains old payloads and approval hashes. To restore, stop all MaiZi processes, copy the chosen backup's `maizi.sqlite`, `files/` and `artifacts/` to a new empty data directory, and launch with `--data-dir` pointing there. Preserve the original directory. `scripts/verify_backup.py <backup-folder>` validates a temporary restored copy without modifying the backup. This is a single-operator local prototype, with no multi-user authentication or production tenant isolation; run only one app process for a given data directory.
+New data persists in the operating system's `wheat_assistant` application-data directory, or `WHEAT_ASSISTANT_DATA_DIR` when configured. Existing installations continue to use their original `MaiZi` data directory and `maizi.sqlite` database when no current database exists, so renaming does not hide saved work. Legacy `MAIZI_DATA_DIR` and `MAIZI_PORT` remain accepted; the corresponding `WHEAT_ASSISTANT_` settings take precedence. Input files remain intact; results are separate. Stop the app before backing up that directory. Before the first v0.2 opening of an existing database, the app creates a verified SQLite backup and copies original files and artifacts under that directory's `backups/`; it retains old payloads and approval hashes. To restore, stop all wheat_assistant processes, copy the chosen backup's database (`wheat_assistant.sqlite`, or legacy `maizi.sqlite`), `files/` and `artifacts/` to a new empty data directory, and launch with `--data-dir` pointing there. Preserve the original directory. `scripts/verify_backup.py <backup-folder>` validates a temporary restored copy without modifying the backup. This is a single-operator local prototype, with no multi-user authentication or production tenant isolation; run only one app process for a given data directory.
 
 ## Interactive review path
 
@@ -69,7 +73,7 @@ Failed or interrupted runs can be retried with the same run ID and approved snap
 
 React/TypeScript frontend → FastAPI → validated FlowSpec → deterministic Python subprocess. SQLite stores immutable flow approvals, input hashes, run snapshots and activity. Rows retain source file/sheet/row and each transformation. Resource limits bound the child process; it executes only bundled operations and receives no model credentials. This is process separation, not a hardened arbitrary-code sandbox; arbitrary generated code is never accepted.
 
-`backend/maizi/status_guard.py` was developed and tested in a real Replit Free project, downloaded, hash-checked and integrated unchanged. `REPLIT_MODULE.json` records its sanitized provenance. Replit is not hosting the full app. Orbyte identity/task handoff is simulated and labeled. No fine-tuning or GPU training has been performed.
+`backend/wheat_assistant/status_guard.py` was developed and tested in a real Replit Free project, downloaded, hash-checked and integrated unchanged. `REPLIT_MODULE.json` records its sanitized provenance. Replit is not hosting the full app. Orbyte identity/task handoff is simulated and labeled. No fine-tuning or GPU training has been performed.
 
 ```sh
 uv run pytest -q
@@ -82,7 +86,7 @@ uv run python scripts/check_api.py   # optional; makes one real configured-provi
 uv run python scripts/build_bundle.py
 ```
 
-The build script creates an OS-native `dist/MaiZi-<OS>-<architecture>-v0.2.1.zip` with a source manifest. Run it on each target OS; it is not a cross-compiler. `.github/workflows/check.yml` prepares macOS/Windows checks and artifacts when run in your repository. A prepared workflow is not evidence that either hosted job has run. Development binaries are unsigned/not notarized. This foundation does not include submission documents, a public deployment or a completed competition submission.
+The build script creates an OS-native `dist/wheat_assistant-<OS>-<architecture>-v0.2.1.zip` with a source manifest. Run it on each target OS; it is not a cross-compiler. `.github/workflows/check.yml` prepares macOS/Windows checks and artifacts when run in your repository. A prepared workflow is not evidence that either hosted job has run. Development binaries are unsigned/not notarized. This foundation does not include submission documents, a public deployment or a completed competition submission.
 
 See [ACCEPTANCE.md](ACCEPTANCE.md) for the measured v0.2 results and remaining gates. The six live-model cases used all twelve authorized requests: one succeeded after structural repair and five were rejected as invalid output. No first-attempt successes were observed. Those failures remain recorded; deterministic editable setup works without a key. Schema and repair guidance were subsequently strengthened and mock-tested, but have not received another live verification within this budget.
 

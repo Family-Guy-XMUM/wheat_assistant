@@ -12,6 +12,7 @@ from pathlib import Path
 
 from sqlalchemy import JSON, Column, Integer, String, create_engine, select, update
 from sqlalchemy.orm import declarative_base, sessionmaker
+from wheat_assistant.runtime_paths import database_path
 
 Base = declarative_base()
 class Entity(Base):
@@ -34,11 +35,12 @@ class Store:
         root.mkdir(parents=True, exist_ok=True)
         (root / "files").mkdir(exist_ok=True)
         (root / "artifacts").mkdir(exist_ok=True)
+        database_file = database_path(root)
         marker = root / "backups" / "hardening-v2.json"
-        if (root / "maizi.sqlite").is_file() and not marker.exists():
+        if database_file.is_file() and not marker.exists():
             backup = root / "backups" / ("hardening-v2-" + uuid.uuid4().hex[:12])
             backup.mkdir(parents=True)
-            with closing(sqlite3.connect(root / "maizi.sqlite")) as source, closing(sqlite3.connect(backup / "maizi.sqlite")) as target:
+            with closing(sqlite3.connect(database_file)) as source, closing(sqlite3.connect(backup / database_file.name)) as target:
                 source.backup(target)
                 if target.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
                     raise ValueError("The pre-upgrade backup could not be verified")
@@ -46,14 +48,14 @@ class Store:
                 if (root / folder).exists():
                     shutil.copytree(root / folder, backup / folder)
             marker.write_text(json.dumps({"backup": backup.name, "verified": True}), encoding="utf-8")
-        if (root / "maizi.sqlite").is_file():
-            with closing(sqlite3.connect(root / "maizi.sqlite")) as database, database:
+        if database_file.is_file():
+            with closing(sqlite3.connect(database_file)) as database, database:
                 columns = {row[1] for row in database.execute("PRAGMA table_info(entities)")}
                 if columns and not {"id", "kind", "payload", "created"}.issubset(columns):
                     raise ValueError("Unsupported database schema. Preserve the verified backup and use a new data directory.")
                 if columns and "revision" not in columns:
                     database.execute("ALTER TABLE entities ADD COLUMN revision INTEGER NOT NULL DEFAULT 1")
-        self.engine = create_engine("sqlite:///" + str(root / "maizi.sqlite"), connect_args={"check_same_thread": False, "timeout": 30})
+        self.engine = create_engine("sqlite:///" + str(database_file), connect_args={"check_same_thread": False, "timeout": 30})
         self.lock = threading.Lock()
         self._closed = False
         try:

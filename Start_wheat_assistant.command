@@ -9,4 +9,4 @@ if [ ! -f frontend/dist/index.html ]; then
   echo "First run: npm --prefix frontend ci && npm --prefix frontend run build"
   exit 1
 fi
-exec .venv/bin/python -m maizi.launcher
+exec .venv/bin/python -m wheat_assistant.launcher

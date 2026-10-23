@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 set "PYTHONUTF8=1"
-title MaiZi - First-time Windows setup
+title wheat_assistant - First-time Windows setup
 pushd "%~dp0"
 if errorlevel 1 goto folder_error
 
@@ -33,7 +33,7 @@ if errorlevel 1 goto setup_failed
 
 :setup_ready
 echo.
-echo Setup complete. Double-click Start_MaiZi.bat to launch.
+echo Setup complete. Double-click Start_wheat_assistant.bat to launch.
 echo Optional live AI: configure your own .env locally. Never share that file.
 echo Existing .env files are preserved. Editable rules and demos work without a key.
 popd

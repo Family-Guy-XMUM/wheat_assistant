@@ -5,8 +5,8 @@ import json
 import zipfile
 from pathlib import Path
 
-from maizi import __version__
-from maizi.release_evidence import candidate_info, manifest_digest, source_files as distributable_sources
+from wheat_assistant import __version__
+from wheat_assistant.release_evidence import candidate_info, manifest_digest, source_files as distributable_sources
 
 ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE = {"source-release.json", "native-release.json", "performance.json", "browser-results.json", "final-checks.json", "eol-checkout.json"}
@@ -21,7 +21,7 @@ def main():
     parser.add_argument("--verification-dir", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    target = args.output or ROOT/"dist"/("MaiZi-Windows-Source-v"+__version__+".zip")
+    target = args.output or ROOT/"dist"/("wheat_assistant-Windows-Source-v"+__version__+".zip")
     if target.exists():
         raise SystemExit("Source ZIP already exists. Preserve it and use --output for a new candidate.")
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -47,12 +47,12 @@ def main():
         with zipfile.ZipFile(target,"w",zipfile.ZIP_DEFLATED) as archive:
             for path in paths:
                 name = path.relative_to(ROOT).as_posix()
-                entry = zipfile.ZipInfo.from_file(path,"MaiZi_Assistant/"+name)
+                entry = zipfile.ZipInfo.from_file(path,"wheat_assistant/"+name)
                 archive.writestr(entry,snapshot[name],compress_type=zipfile.ZIP_DEFLATED)
             for path, content in evidence:
-                archive.writestr("MaiZi_Assistant/verification/"+path.name,content)
-            archive.writestr("MaiZi_Assistant/SOURCE_MANIFEST.json",json.dumps(manifest,indent=2))
-            archive.writestr("MaiZi_Assistant/CANDIDATE.json",json.dumps(info,indent=2))
+                archive.writestr("wheat_assistant/verification/"+path.name,content)
+            archive.writestr("wheat_assistant/SOURCE_MANIFEST.json",json.dumps(manifest,indent=2))
+            archive.writestr("wheat_assistant/CANDIDATE.json",json.dumps(info,indent=2))
         current = {path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest() for path in source_files()}
         if current != manifest or any(path.read_bytes() != content for path, content in evidence):
             raise SystemExit("Source or evidence changed during packaging; partial ZIP removed, freeze and retry")

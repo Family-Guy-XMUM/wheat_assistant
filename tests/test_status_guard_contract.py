@@ -1,9 +1,9 @@
-"""Independent contract tests for ``maizi.status_guard.check_status_coverage``.
+"""Independent contract tests for ``wheat_assistant.status_guard.check_status_coverage``.
 
 Written from CONTRACT.md only. All rows and channels are synthetic. The tests
 cover known include/exclude statuses, trimmed matching, unknown and missing
 values, unconfigured channels, empty input, channel isolation and the no-mutation
-guarantee. If ``maizi.status_guard`` is missing the import must fail; there is
+guarantee. If ``wheat_assistant.status_guard`` is missing the import must fail; there is
 no skip and no replacement implementation.
 """
 
@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from maizi.status_guard import check_status_coverage
+from wheat_assistant.status_guard import check_status_coverage
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "golden_cases.json"
 

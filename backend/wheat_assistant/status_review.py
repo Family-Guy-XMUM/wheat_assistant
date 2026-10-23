@@ -1,7 +1,7 @@
 """Explicit per-batch Hold decisions, separate from FlowSpec v1 rules."""
 from collections import Counter
 
-from maizi.store import digest
+from wheat_assistant.store import digest
 
 
 class StatusReviewRequired(ValueError):

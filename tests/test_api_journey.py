@@ -1,6 +1,6 @@
 """Independent API journey tests for the three synthetic demo weeks.
 
-All data comes from ``maizi.samples.demo_files`` or synthetic uploads. The tests
+All data comes from ``wheat_assistant.samples.demo_files`` or synthetic uploads. The tests
 use a real FastAPI TestClient with an isolated ``tmp_path`` data directory. They
 never call an external model: the three LLM environment variables are cleared,
 dotenv loading is monkeypatched off, and ``propose_live`` is replaced with a
@@ -32,7 +32,7 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setattr(dotenv, "load_dotenv", lambda *args, **kwargs: False)
 
-    from maizi import api
+    from wheat_assistant import api
 
     def forbidden_live(*args, **kwargs):
         raise AssertionError("Live model calls are forbidden in these tests")
@@ -203,7 +203,7 @@ def test_week1_demo_end_to_end(client: TestClient) -> None:
     assert artifact.headers["content-type"].startswith(
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-    assert "MaiZi_Picking_Preparation.xlsx" in artifact.headers["content-disposition"]
+    assert "wheat_assistant_Picking_Preparation.xlsx" in artifact.headers["content-disposition"]
 
     handed_off = client.post(f"/api/runs/{run['id']}/handoff")
     assert handed_off.status_code == 200, handed_off.text

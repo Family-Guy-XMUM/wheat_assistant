@@ -33,8 +33,8 @@ def workbook_bytes(headers, rows=()):
     sheet.append(headers)
     for row in rows:
         sheet.append(list(row))
-    workbook.properties.creator = "MaiZi"
-    workbook.properties.lastModifiedBy = "MaiZi"
+    workbook.properties.creator = "wheat_assistant"
+    workbook.properties.lastModifiedBy = "wheat_assistant"
     stream = io.BytesIO()
     workbook.save(stream)
     return stream.getvalue()

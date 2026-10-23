@@ -28,7 +28,7 @@ def offline(monkeypatch: pytest.MonkeyPatch):
 
 @pytest.fixture()
 def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    from maizi import api
+    from wheat_assistant import api
 
     monkeypatch.setattr(api, "propose_live", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("no provider")))
     with TestClient(api.create_app(data_dir=tmp_path)) as test_client:
@@ -84,7 +84,7 @@ def test_policy2_execution_without_confirmation_returns_409(client: TestClient) 
 def test_health_instance_id_stable_within_app_and_changes_after_restart(
     tmp_path: Path,
 ) -> None:
-    from maizi.api import create_app
+    from wheat_assistant.api import create_app
 
     with TestClient(create_app(data_dir=tmp_path)) as first:
         one = first.get("/api/health").json()["instance_id"]
@@ -97,7 +97,7 @@ def test_health_instance_id_stable_within_app_and_changes_after_restart(
 
 
 def test_child_environment_exact_allowlist_and_fixed_pythonutf8() -> None:
-    from maizi.runtime_environment import child_environment
+    from wheat_assistant.runtime_environment import child_environment
 
     source = {
         "systemroot": r"C:\Windows",
@@ -110,7 +110,7 @@ def test_child_environment_exact_allowlist_and_fixed_pythonutf8() -> None:
         "lc_all": "en_GB.UTF-8",
         "LLM_API_KEY": "synthetic-secret",
         "OPENAI_API_KEY": "synthetic-secret",
-        "MAIZI_DATA_DIR": r"C:\Private",
+        "WHEAT_ASSISTANT_DATA_DIR": r"C:\Private",
     }
     result = child_environment(source, native=True, windows=True)
     assert set(result) == {
@@ -133,7 +133,7 @@ def test_child_environment_exact_allowlist_and_fixed_pythonutf8() -> None:
 
 
 def test_bind_loopback_rejects_active_listener_and_accepts_after_close() -> None:
-    from maizi.local_network import bind_loopback
+    from wheat_assistant.local_network import bind_loopback
 
     holder = socket.socket()
     holder.bind(("127.0.0.1", 0))

@@ -16,7 +16,7 @@ import pytest
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Border, Font, Side
 
-from maizi import exporter, files
+from wheat_assistant import exporter, files
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "io_hardening"
 TEMPLATE = FIXTURES / "template_two_sheets.xlsx"

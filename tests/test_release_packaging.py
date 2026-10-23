@@ -7,17 +7,17 @@ import zipfile
 from pathlib import Path
 
 import pytest
-from maizi.release_evidence import manifest_digest
+from wheat_assistant.release_evidence import manifest_digest
 
 
 def package_module(tmp_path, monkeypatch):
     script = Path(__file__).resolve().parents[1]/'scripts/package_source.py'
-    spec = importlib.util.spec_from_file_location('maizi_package_test',script)
+    spec = importlib.util.spec_from_file_location('wheat_assistant_package_test',script)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     monkeypatch.setattr(module,'ROOT',tmp_path)
     (tmp_path/'README.md').write_text('Synthetic packaging fixture\n')
-    backend = tmp_path/'backend/maizi'
+    backend = tmp_path/'backend/wheat_assistant'
     backend.mkdir(parents=True)
     (backend/'__init__.py').write_text('__version__ = "0.2.1"\n')
     return module
@@ -29,11 +29,11 @@ def test_package_manifest_and_metadata_describe_exact_archive_bytes(tmp_path, mo
     monkeypatch.setattr(sys,'argv',['package_source.py','--output',str(target)])
     module.main()
     with zipfile.ZipFile(target) as archive:
-        manifest = json.loads(archive.read('MaiZi_Assistant/SOURCE_MANIFEST.json'))
-        info = json.loads(archive.read('MaiZi_Assistant/CANDIDATE.json'))
+        manifest = json.loads(archive.read('wheat_assistant/SOURCE_MANIFEST.json'))
+        info = json.loads(archive.read('wheat_assistant/CANDIDATE.json'))
         assert info['candidate_sha256'] == manifest_digest(manifest)
-        assert manifest['README.md'] == hashlib.sha256(archive.read('MaiZi_Assistant/README.md')).hexdigest()
-        assert set(manifest) == {'README.md','backend/maizi/__init__.py'}
+        assert manifest['README.md'] == hashlib.sha256(archive.read('wheat_assistant/README.md')).hexdigest()
+        assert set(manifest) == {'README.md','backend/wheat_assistant/__init__.py'}
 
 
 @pytest.mark.parametrize('changed_kind', ['source','evidence'])

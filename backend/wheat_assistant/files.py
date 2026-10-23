@@ -15,7 +15,7 @@ from openpyxl.utils.exceptions import InvalidFileException
 from xml.etree.ElementTree import ParseError
 from defusedxml.common import DefusedXmlException
 
-from maizi.numbers import positive_decimal
+from wheat_assistant.numbers import positive_decimal
 
 PARSER_VERSION = 2
 MAX_CELL_CHARS = 32767

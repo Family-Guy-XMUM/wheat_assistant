@@ -18,7 +18,7 @@ def markers():
     identities={x for x in result.stdout.splitlines() if len(x.strip())>=5}
     # These public tool/service labels are not a person's identity. In
     # dependencies, GitHub occurs in release links and public class names.
-    values.extend(("git_identity",x) for x in identities if x.lower() not in {"codex","maizi team","sdc team","github","github actions"})
+    values.extend(("git_identity",x) for x in identities if x.lower() not in {"codex","wheat_assistant team","maizi team","sdc team","github","github actions"})
     return [(kind,value.encode()) for kind,value in values],bool(identities)
 
 def audit(archives):
@@ -40,7 +40,7 @@ def audit(archives):
     from package_source import source_files
     for path in source_files():scan(path.relative_to(ROOT).as_posix(),path.read_bytes())
     for path in archives:scan(path.name,path.read_bytes())
-    binary=ROOT/"dist"/"MaiZi"/"MaiZi"
+    binary=ROOT/"dist"/"wheat_assistant"/"wheat_assistant"
     if binary.is_file():
         from PyInstaller.archive.readers import CArchiveReader
         reader=CArchiveReader(str(binary))

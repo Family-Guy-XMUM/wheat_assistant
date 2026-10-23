@@ -2,7 +2,7 @@ import json
 import sys
 from pathlib import Path
 
-from maizi.engine import process_orders
+from wheat_assistant.engine import process_orders
 
 def main(args=None):
     source, target = (args or sys.argv[1:])[:2]

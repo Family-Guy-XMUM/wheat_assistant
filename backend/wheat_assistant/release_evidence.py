@@ -9,12 +9,12 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from maizi import __version__
+from wheat_assistant import __version__
 
 ROOT_FILES = {"README.md", "LICENSE", "AGENTS.md", "CONTRACT.md", "REPLIT_MODULE.json", ".env.example", ".gitignore", ".gitattributes",
-              "pyproject.toml", "uv.lock", "Start_MaiZi.command", "Start_MaiZi.bat", "Setup_Windows.bat", "Validate_Windows.bat",
+              "pyproject.toml", "uv.lock", "Start_wheat_assistant.command", "Start_wheat_assistant.bat", "Setup_Windows.bat", "Validate_Windows.bat",
               "WINDOWS_VALIDATION.md", "ACCEPTANCE.md"}
-TREES = ("backend/maizi", "frontend/src", "frontend/public", "frontend/e2e", "frontend/dist", "tests", "scripts", ".github/workflows")
+TREES = ("backend/wheat_assistant", "frontend/src", "frontend/public", "frontend/e2e", "frontend/dist", "tests", "scripts", ".github/workflows")
 IGNORED = {"__pycache__", ".pytest_cache", ".hypothesis", ".DS_Store", "node_modules", ".venv", ".env", ".git", ".runtime"}
 
 
@@ -30,7 +30,7 @@ def source_files(root):
 
 def runtime_manifest(root):
     return {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
-            for p in sorted([*(root / "backend" / "maizi").rglob("*.py"),
+            for p in sorted([*(root / "backend" / "wheat_assistant").rglob("*.py"),
                              *[p for p in (root / "frontend" / "dist").rglob("*") if p.is_file()]])}
 
 

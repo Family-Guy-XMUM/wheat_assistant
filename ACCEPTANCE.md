@@ -1,4 +1,4 @@
-# MaiZi v0.2.1 修正候选验收
+# wheat_assistant v0.2.1 修正候选验收
 
 **状态：修正候选，待 Windows v0.2.1 实机复验。** 详细命令和逐项回执要求见 [WINDOWS_VALIDATION.md](WINDOWS_VALIDATION.md)。本轮没有新增真实模型调用；原有模型质量未通过的结论保留。
 
@@ -18,7 +18,7 @@ Windows原生包须在Windows构建；本机提供的是Windows源码复验ZIP�
 
 以下保留上一批本地验收结论。其旧路径、101项/7项数量、3.122秒和“Windows未执行”均指当时状态；后来收到的Windows回执总评失败，新版本须重新验收。旧报告不作为v0.2.1通过证据，也不默认随本次源码ZIP分发。
 
-# MaiZi 0.2.0 本地整改验收（2026-10-22 MYT）
+# wheat_assistant 0.2.0 本地整改验收（2026-10-22 MYT）
 
 本轮由 Codex / agent-audit 协调、实现主线并最终重跑验收；DeepSeek Harness / agent-contract-tests 实现 CSV／模板导出加固，新增26项独立测试，并进行两轮只读复核。Replit Status Guard 原有来源与哈希保持。没有新增 Git commit、push、公开发布或赛事提交。
 

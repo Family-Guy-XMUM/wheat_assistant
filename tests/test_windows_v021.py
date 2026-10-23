@@ -42,7 +42,7 @@ def offline(monkeypatch: pytest.MonkeyPatch):
 
 @pytest.fixture()
 def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    from maizi import api
+    from wheat_assistant import api
 
     def forbidden_provider(*args, **kwargs):
         raise AssertionError("Provider calls are forbidden in this test module")
@@ -223,7 +223,7 @@ def make_legacy(client: TestClient, flow_id: str) -> None:
 
 
 def test_lf_crlf_multiline_preserves_content_and_physical_rows() -> None:
-    from maizi.files import parse_table
+    from wheat_assistant.files import parse_table
 
     lf = b'Order,Note\nSYN-LF,"first\nsecond"\nSYN-LF-2,plain\n'
     crlf = b'Order,Note\r\nSYN-CR,"first\r\nsecond"\r\nSYN-CR-2,plain\r\n'
@@ -243,7 +243,7 @@ def test_lf_crlf_multiline_preserves_content_and_physical_rows() -> None:
 
 
 def test_child_environment_windows_native_allowlist_and_secrets() -> None:
-    from maizi.runtime_environment import child_environment
+    from wheat_assistant.runtime_environment import child_environment
 
     root = r"C:\Windows"
     environment = {
@@ -254,7 +254,7 @@ def test_child_environment_windows_native_allowlist_and_secrets() -> None:
         "LLM_API_KEY": "synthetic-secret-key",
         "OPENAI_API_KEY": "synthetic-openai-key",
         "AWS_SECRET_ACCESS_KEY": "synthetic-aws-key",
-        "MAIZI_DATA_DIR": r"C:\Synthetic\Private",
+        "WHEAT_ASSISTANT_DATA_DIR": r"C:\Synthetic\Private",
     }
     result = child_environment(environment, native=True, windows=True)
     lower_keys = {key.casefold() for key in result}
@@ -265,14 +265,14 @@ def test_child_environment_windows_native_allowlist_and_secrets() -> None:
     expected_path = (root + r"\System32").casefold()
     assert result["PATH"].replace("/", "\\").strip("\\;").casefold() == expected_path
     assert not lower_keys.intersection(
-        {"llm_api_key", "openai_api_key", "aws_secret_access_key", "maizi_data_dir"}
+        {"llm_api_key", "openai_api_key", "aws_secret_access_key", "wheat_assistant_data_dir"}
     )
     assert "synthetic-secret-key" not in {str(value) for value in result.values()}
     assert "synthetic-openai-key" not in {str(value) for value in result.values()}
 
 
 def test_child_environment_windows_worker_path_and_case_insensitive_keys() -> None:
-    from maizi.runtime_environment import child_environment
+    from wheat_assistant.runtime_environment import child_environment
 
     result = child_environment(
         {
@@ -289,7 +289,7 @@ def test_child_environment_windows_worker_path_and_case_insensitive_keys() -> No
 
 
 def test_child_environment_windows_requires_systemroot_and_posix_native_path() -> None:
-    from maizi.runtime_environment import child_environment
+    from wheat_assistant.runtime_environment import child_environment
 
     with pytest.raises(ValueError) as caught:
         child_environment({"PATH": r"C:\Synthetic\Tools"}, native=True, windows=True)
@@ -313,9 +313,9 @@ def test_child_environment_windows_requires_systemroot_and_posix_native_path() -
 def test_store_close_is_idempotent_and_closes_raw_sqlite_connections(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from maizi.store import Store
+    from wheat_assistant.store import Store
 
-    database = tmp_path / "maizi.sqlite"
+    database = tmp_path / "wheat_assistant.sqlite"
     connection = sqlite3.connect(database)
     try:
         connection.execute(
@@ -336,7 +336,7 @@ def test_store_close_is_idempotent_and_closes_raw_sqlite_connections(
         opened.append(connection)
         return connection
 
-    monkeypatch.setattr("maizi.store.sqlite3.connect", tracking_connect)
+    monkeypatch.setattr("wheat_assistant.store.sqlite3.connect", tracking_connect)
     store = Store(tmp_path)
     assert opened
 
@@ -351,8 +351,8 @@ def test_store_close_is_idempotent_and_closes_raw_sqlite_connections(
 def test_lifespan_closes_store_on_normal_exit_and_startup_failure(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from maizi.api import create_app
-    from maizi.store import Store
+    from wheat_assistant.api import create_app
+    from wheat_assistant.store import Store
 
     calls = []
     original_close = getattr(Store, "close", None)

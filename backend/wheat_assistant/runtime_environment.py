@@ -19,7 +19,7 @@ def child_environment(environ: Mapping[str, str] | None = None, *, native: bool 
         result = {key: normalized[key.upper()] for key in _KEYS if key.upper() in normalized}
         root = result.get("SystemRoot", "")
         if not root.strip() or not ntpath.isabs(root):
-            raise ValueError("Windows SystemRoot is missing or invalid; restore the system environment before starting MaiZi")
+            raise ValueError("Windows SystemRoot is missing or invalid; restore the system environment before starting wheat_assistant")
         if native:
             result["PATH"] = ntpath.join(root, "System32")
     else:

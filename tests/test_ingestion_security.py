@@ -32,7 +32,7 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setattr(dotenv, "load_dotenv", lambda *args, **kwargs: False)
 
-    from maizi import api
+    from wheat_assistant import api
 
     def forbidden_live(*args, **kwargs):
         raise AssertionError("Live model calls are forbidden in these tests")

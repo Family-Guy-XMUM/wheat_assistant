@@ -2,7 +2,7 @@ name: Verify and build native local app
 on:
   workflow_dispatch:
   push:
-    paths: ["backend/**", "frontend/**", "tests/**", "scripts/**", "pyproject.toml", "uv.lock", ".gitattributes", "Start_MaiZi.bat", "Setup_Windows.bat", "Validate_Windows.bat", ".github/workflows/**"]
+    paths: ["backend/**", "frontend/**", "tests/**", "scripts/**", "pyproject.toml", "uv.lock", ".gitattributes", "Start_wheat_assistant.bat", "Setup_Windows.bat", "Validate_Windows.bat", ".github/workflows/**"]
 permissions:
   contents: read
 jobs:
@@ -29,7 +29,7 @@ jobs:
       - name: Check Windows launcher prerequisites
         if: runner.os == 'Windows'
         shell: cmd
-        run: call Start_MaiZi.bat --check
+        run: call Start_wheat_assistant.bat --check
       - name: Windows versioned acceptance receipt
         if: runner.os == 'Windows'
         shell: cmd
@@ -52,7 +52,7 @@ jobs:
         if: runner.os != 'Windows'
         run: npm --prefix frontend test
         env:
-          MAIZI_BROWSER_CHANNEL: chromium
+          WHEAT_ASSISTANT_BROWSER_CHANNEL: chromium
       - run: uv run python scripts/verify_release.py --output output/verification/source-release.json
         if: runner.os != 'Windows'
       - run: uv run python scripts/build_bundle.py
@@ -61,14 +61,14 @@ jobs:
         if: runner.os != 'Windows'
         shell: pwsh
         run: |
-          $bundle = Get-ChildItem dist/MaiZi-*.zip | Select-Object -First 1
+          $bundle = Get-ChildItem dist/wheat_assistant-*.zip | Select-Object -First 1
           uv run python scripts/verify_release.py --bundle $bundle.FullName --output output/verification/native-release.json
       - name: Three complete scale trials
         if: runner.os != 'Windows'
         run: uv run python scripts/benchmark_release.py --output output/verification/performance.json
       - uses: actions/upload-artifact@v4
         with:
-          name: MaiZi-${{ matrix.os }}
+          name: wheat_assistant-${{ matrix.os }}
           path: dist/*.zip
           retention-days: 7
       - uses: actions/upload-artifact@v4

@@ -1,5 +1,5 @@
 {
-  "schema": "maizi.contract.golden.v1",
+  "schema": "wheat_assistant.contract.golden.v1",
   "notice": "Synthetic contract fixtures only. All channels, orders, products, names and values were invented for tests; no real accounts, people, credentials, logs or local paths.",
   "engine": {
     "products": [

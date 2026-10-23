@@ -1,5 +1,5 @@
 """Workflow identity and review diffs, separate from immutable FlowSpec hashes."""
-from maizi.store import digest
+from wheat_assistant.store import digest
 
 
 def metadata(flow):

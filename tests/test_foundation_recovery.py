@@ -30,12 +30,12 @@ def assert_unicode_result(result):
     assert result["sku_summary"]==[{"sku":"茶-001","name":"合成茉莉茶","quantity":"24","unit":"件"}]
 
 def test_unicode_in_real_child_with_ascii_parent_defaults(monkeypatch):
-    from maizi.execution import execute_isolated
+    from wheat_assistant.execution import execute_isolated
     ascii_defaults(monkeypatch)
     assert_unicode_result(execute_isolated(*unicode_case()))
 
 def test_worker_reads_and_writes_utf8_with_ascii_defaults(tmp_path,monkeypatch):
-    from maizi.worker import main
+    from wheat_assistant.worker import main
     rows,products,flow=unicode_case()
     source,target=tmp_path/"input.json",tmp_path/"result.json"
     source.write_bytes(json.dumps({"rows":rows,"products":products,"flow":flow},ensure_ascii=False).encode("utf-8"))
@@ -48,7 +48,7 @@ def factory(monkeypatch,tmp_path):
     import dotenv
     monkeypatch.setattr(dotenv,"load_dotenv",lambda *a,**kw:False)
     for key in ["LLM_BASE_URL","LLM_MODEL","LLM_API_KEY"]:monkeypatch.setenv(key,"")
-    from maizi.api import create_app
+    from wheat_assistant.api import create_app
     return lambda:create_app(data_dir=tmp_path)
 
 def approved_run(client):
