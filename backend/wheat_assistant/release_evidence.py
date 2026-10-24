@@ -11,7 +11,7 @@ from pathlib import Path
 
 from wheat_assistant import __version__
 
-ROOT_FILES = {"README.md", "LICENSE", "AGENTS.md", ".env.example", ".gitignore", ".gitattributes", ".replit",
+ROOT_FILES = {"README.md", "LICENSE", ".env.example", ".gitignore", ".gitattributes", ".replit",
               "pyproject.toml", "uv.lock", "Start_wheat_assistant.command", "Start_wheat_assistant.bat", "Setup_Windows.bat", "Validate_Windows.bat"}
 # Only reviewed public documentation is distributed; arbitrary evidence files are not swept in.
 DOCUMENT_FILES = {

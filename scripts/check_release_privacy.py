@@ -18,7 +18,12 @@ def markers():
     identities={x for x in result.stdout.splitlines() if len(x.strip())>=5}
     # These public tool/service labels are not a person's identity. In
     # dependencies, GitHub occurs in release links and public class names.
-    values.extend(("git_identity",x) for x in identities if x.lower() not in {"codex","wheat_assistant team","maizi team","sdc team","github","github actions"})
+    public_labels = {
+        "codex", "codex / agent-remediation", "codex / agent-submission-audit",
+        "deepseek harness", "wheat_assistant team", "maizi team", "sdc team",
+        "github", "github actions",
+    }
+    values.extend(("git_identity",x) for x in identities if x.lower() not in public_labels)
     return [(kind,value.encode()) for kind,value in values],bool(identities)
 
 def audit(archives):

@@ -17,7 +17,7 @@ This map keeps the reviewer-facing repository aligned with the example submissio
 
 The public tree identifies the team as **Family Guy** and the project as `wheat_assistant`. Individual developer names, personal email addresses, local absolute paths, credentials, runtime databases, logs and resource-library records are not part of the reviewer-facing submission. Required identity fields remain only where the official submission forms require them.
 
-The tracked `AGENTS.md` file is an internal build-workspace rule file rather than a reviewer deliverable. The user chose to keep all files for now, so it remains in place and is clearly identified here as internal rather than as a reviewer requirement.
+Internal build-workspace rules are maintained outside the public submission repository. No `AGENTS.md` or other private collaboration instructions are included in the reviewer-facing tree.
 
 ## Reviewer path
 
