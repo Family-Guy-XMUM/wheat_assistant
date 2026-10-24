@@ -2,7 +2,6 @@
 import hashlib
 import io
 import os
-import shutil
 
 import pytest
 from fastapi.testclient import TestClient
@@ -21,7 +20,7 @@ def checked(response):
     return response.json()
 
 
-def test_three_weeks_restart_download_and_second_browser(tmp_path, monkeypatch):
+def test_three_weeks_restart_download_and_second_browser(tmp_path, monkeypatch, lose_cache):
     monkeypatch.setenv("WHEAT_CLOUD_LIVE_AI", "0")
     monkeypatch.setenv("LLM_API_KEY", "")
     url = os.getenv("WHEAT_TEST_DATABASE_URL")
@@ -68,7 +67,7 @@ def test_three_weeks_restart_download_and_second_browser(tmp_path, monkeypatch):
         assert first.post(f"/api/batches/{batch['id']}/plan", json={"mode": "live"}).status_code == 503
 
     # Simulate complete loss of the deployment's ephemeral disk, not just a browser refresh.
-    shutil.rmtree(database.cache_root)
+    lose_cache(database.cache_root)
     restarted = create_cloud_app(database=database, hosts=[HOST])
     with TestClient(restarted, base_url="https://" + HOST, headers=HEADERS, cookies=cookie) as resumed:
         assert len(checked(resumed.get("/api/state"))["runs"]) == 3

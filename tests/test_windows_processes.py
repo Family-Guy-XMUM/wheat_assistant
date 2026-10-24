@@ -89,6 +89,38 @@ def test_partial_benchmark_never_calculates_an_acceptance_median(monkeypatch):
     assert result['runs'][0]['winerror'] == 32
 
 
+@pytest.mark.parametrize('refused', [True, False])
+def test_pending_port_connection_must_finish_before_release_is_proven(monkeypatch, refused):
+    verify = load_script('verify_release')
+    clock, bound = [0.0], []
+    monkeypatch.setattr(verify.time, 'monotonic', lambda: clock[0])
+    monkeypatch.setattr(verify.time, 'sleep', lambda seconds: clock.__setitem__(0, clock[0] + seconds))
+
+    class DelayedSocket:
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
+        def settimeout(self, seconds): self.timeout = seconds
+        def connect_ex(self, address):
+            # Model a Windows refusal completing after one second. Abandoning
+            # every attempt sooner restarts the wait and only yields 10035.
+            clock[0] += min(self.timeout, 1.0) if refused else self.timeout
+            return 10061 if refused and self.timeout >= 1.0 else 10035
+        def setsockopt(self, *args): pass
+        def bind(self, address): bound.append(address)
+
+    monkeypatch.setattr(verify.socket, 'socket', DelayedSocket)
+    if refused:
+        evidence = verify.released_port(8765, timeout=10)
+        assert evidence == {'released': True, 'connection_error': 10061, 'bind_succeeded': True}
+        assert bound == [('127.0.0.1', 8765)]
+    else:
+        with pytest.raises(RuntimeError, match='refused and bindable') as caught:
+            verify.released_port(8765, timeout=10)
+        assert caught.value.port_diagnostics['last_connection_error'] == 10035
+        assert bound == []
+    assert clock[0] <= 10.05
+
+
 def test_new_attempt_preserves_an_existing_failed_receipt(tmp_path):
     original = tmp_path/'performance.json'
     write_report(original,{'passed':False,'phase':'original_windows_failure'})

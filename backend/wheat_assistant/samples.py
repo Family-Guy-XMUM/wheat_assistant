@@ -1,8 +1,10 @@
 """Team-created synthetic fixtures, generated as real input files."""
 import csv
 import io
+import re
 from copy import deepcopy
 from datetime import date, timedelta
+from zipfile import ZIP_DEFLATED, ZipFile
 from openpyxl import Workbook
 
 PRODUCTS = [
@@ -37,7 +39,23 @@ def workbook_bytes(headers, rows=()):
     workbook.properties.lastModifiedBy = "wheat_assistant"
     stream = io.BytesIO()
     workbook.save(stream)
-    return stream.getvalue()
+    workbook.close()
+    # Only these team-created fixtures use a fixed timestamp. Real uploaded
+    # originals and exported workbooks retain their existing metadata rules.
+    # openpyxl updates core.modified during save; ZIP members also get a clock.
+    stable = io.BytesIO()
+    with ZipFile(io.BytesIO(stream.getvalue())) as source, ZipFile(stable, "w", ZIP_DEFLATED) as target:
+        for member in source.infolist():
+            content = source.read(member)
+            if member.filename == "docProps/core.xml":
+                content, count = re.subn(
+                    rb"(<dcterms:(?:created|modified)\b[^>]*>)[^<]*(</dcterms:(?:created|modified)>)",
+                    rb"\g<1>2026-10-05T00:00:00Z\g<2>", content)
+                if count != 2:
+                    raise ValueError("Synthetic workbook timestamps could not be normalized")
+            member.date_time = (2026, 10, 5, 0, 0, 0)
+            target.writestr(member, content)
+    return stable.getvalue()
 
 def demo_files(week):
     if week not in (1, 2, 3):

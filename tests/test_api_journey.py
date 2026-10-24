@@ -214,6 +214,18 @@ def test_week1_demo_end_to_end(client: TestClient) -> None:
     assert task["snapshot"] == run["result_hash"]
 
 
+@pytest.mark.parametrize("host_mime", ["application/zip", "application/octet-stream"])
+def test_xlsx_download_ignores_host_mime_configuration(client, monkeypatch, host_mime):
+    import mimetypes
+
+    # Windows MIME mappings can be supplied by its registry. The application's
+    # generated XLSX response must keep its format even when that map is wrong.
+    mimetypes.init()
+    monkeypatch.setitem(mimetypes.types_map, ".xlsx", host_mime)
+    assert mimetypes.guess_type("synthetic.xlsx")[0] == host_mime
+    test_week1_demo_end_to_end(client)
+
+
 def test_week2_new_status_stays_exception_until_explicitly_excluded(
     client: TestClient,
 ) -> None:

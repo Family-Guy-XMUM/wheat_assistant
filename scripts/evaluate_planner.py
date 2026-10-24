@@ -1,14 +1,37 @@
 """Independent synthetic fixtures and a strictly bounded, explicitly enabled live evaluation."""
 import argparse
+import hashlib
 import json
 import os
 import tempfile
 from pathlib import Path
+from contextlib import nullcontext
 from wheat_assistant.engine import process_orders
 from wheat_assistant.files import profile
 from wheat_assistant.models import FlowSpec
-from wheat_assistant.planner import propose_live, suggest_flow
+from wheat_assistant.planner import PLANNER_VERSION, propose_live, suggest_flow
+from wheat_assistant.release_evidence import attempt_id, candidate_info, report_path, write_report
 from wheat_assistant.store import Store
+
+ROOT = Path(__file__).resolve().parents[1]
+PUBLIC_USAGE_FIELDS = ("status", "attempt", "planner_version", "prompt_hash", "schema_hash", "http_status",
+                       "finish_reason", "content_kind", "content_length", "duration_ms", "tokens", "validation_issues")
+
+
+class EvaluationStore(Store):
+    """The experiment budget counts all reserved calls, including previous attempts and UTC days."""
+    def __init__(self, root, limit):
+        super().__init__(root)
+        self.request_limit = limit
+
+    def add(self, kind, data):
+        if kind == "usage" and len(self.list("usage")) >= self.request_limit:
+            raise ValueError("The experiment request budget has been reached")
+        return super().add(kind, data)
+
+
+def public_usage(usage):
+    return {key: usage[key] for key in PUBLIC_USAGE_FIELDS if key in usage}
 
 def cases():
     base={"Order ID":"O1","Line":"1","Item Code":"S1","Qty":"2","Unit":"piece","Order Status":"Confirmed"}
@@ -59,49 +82,69 @@ def judge(case,rows,products,spec):
     return {"passed":safe and correct_quantity and not dangerous,"summary":result["summary"],"quantity_mapping_correct":correct_quantity,
             "dangerous_error":dangerous,"invented_alias_or_unit":unsafe_alias or unsafe_unit}
 
-def evaluate(live=False):
-    result={"offline":[],"live":[],"http_requests":0,"limit":12,"live_requested":live}
-    with tempfile.TemporaryDirectory(prefix="wheat_assistant-model-evaluation-") as directory, Store(Path(directory)) as store:
+def evaluate(live=False, max_requests=12, data_dir=None, live_cases=None):
+    if not 1 <= max_requests <= 14:
+        raise ValueError("An experiment budget must be between 1 and 14 requests")
+    selected = {case["name"] for case in cases() if case["live"]} if live_cases is None else set(live_cases)
+    available = {case["name"] for case in cases() if case["live"]}
+    if not selected or not selected <= available:
+        raise ValueError("Select only known live evaluation cases")
+    result={"offline":[],"live":[],"http_requests":0,"limit":max_requests,"live_requested":live,
+            "live_cases_requested":sorted(selected), "full_live_suite":selected == available,
+            "planner_version":PLANNER_VERSION, "source_sha256":candidate_info(ROOT)["source_sha256"],
+            "planner_source_sha256":hashlib.sha256((ROOT/"backend/wheat_assistant/planner.py").read_bytes()).hexdigest(),
+            "cases_sha256":hashlib.sha256(json.dumps(cases(),sort_keys=True,ensure_ascii=False).encode()).hexdigest()}
+    directory_context = nullcontext(data_dir) if data_dir is not None else tempfile.TemporaryDirectory(prefix="wheat_assistant-model-evaluation-")
+    with directory_context as directory, EvaluationStore(Path(directory), max_requests) as store:
+        original_ids = {item["id"] for item in store.list("usage")}
         for case in cases():
             assets,rows,products,golden=material(case)
             oracle=judge(case,rows,products,golden)
             assert oracle["passed"], "Independent fixture oracle failed"
             result["offline"].append({"case":case["name"],**oracle})
-            if live and case["live"]:
+            if live and case["live"] and case["name"] in selected:
                 before={x["id"] for x in store.list("usage")}
-                if len(store.list("usage"))>=12:
+                if len(store.list("usage"))>=max_requests:
                     result["live"].append({"case":case["name"],"passed":False,"error":"request_budget_exhausted"});continue
                 try:
                     proposed=propose_live(store,{"id":"synthetic-evaluation"},assets,case["instructions"],suggest_flow(assets))
                     judged=judge(case,rows,products,proposed["flow"])
-                    result["live"].append({"case":case["name"],**judged,"questions":proposed["questions"],"model":proposed["model"]})
+                    result["live"].append({"case":case["name"],**judged,"questions":proposed["questions"],"model":proposed["model"],
+                                           "output_flow":proposed["flow"]})
                 except Exception as error:
                     result["live"].append({"case":case["name"],"passed":False,"error_type":type(error).__name__})
                 attempts=[x for x in reversed(store.list("usage")) if x["id"] not in before]
                 outcome=result["live"][-1]
                 outcome.update({"requests":len(attempts),"attempt_statuses":[x["status"] for x in attempts],
+                    "attempts":[public_usage(x) for x in attempts],
                     "first_attempt_success":outcome["passed"] and len(attempts)==1,
                     "repair_success":outcome["passed"] and len(attempts)==2,
                     "manual_modification_required":not outcome["passed"],"manual_modifications_applied":False})
                 print(json.dumps({"case":case["name"],"passed":outcome["passed"],"requests":len(attempts)}),flush=True)
         usage=store.list("usage")
-        result["http_requests"]=len(usage)
-        result["request_outcomes"]=[{"status":x["status"],"tokens":x.get("tokens")} for x in reversed(usage)]
+        result["http_requests"]=sum(item["id"] not in original_ids for item in usage)
+        result["budget_spent_total"]=len(usage)
+        result["request_outcomes"]=[public_usage(x) for x in reversed(usage) if x["id"] not in original_ids]
     result["offline_passed"]=all(x["passed"] for x in result["offline"])
-    result["live_passed"]=bool(result["live"]) and all(x["passed"] for x in result["live"])
+    result["selected_live_passed"]=bool(result["live"]) and all(x["passed"] for x in result["live"])
+    result["live_passed"]=result["full_live_suite"] and result["selected_live_passed"]
     return result
 
 if __name__=="__main__":
     parser=argparse.ArgumentParser()
     parser.add_argument("--live",action="store_true")
-    parser.add_argument("--output",type=Path,default=Path("output/verification/planner-evaluation.json"))
+    parser.add_argument("--output",type=Path)
+    parser.add_argument("--max-requests",type=int,choices=range(1,15),default=12)
+    parser.add_argument("--data-dir",type=Path,help="Reuse the same private experiment ledger across repeated commands")
+    parser.add_argument("--cases",nargs="+",choices=[case["name"] for case in cases() if case["live"]])
     args=parser.parse_args()
     if args.live:
         from dotenv import load_dotenv
         load_dotenv(Path(__file__).resolve().parents[1]/".env",override=False)
-        os.environ["LLM_DAILY_CALL_LIMIT"]="12"
-    result=evaluate(args.live)
-    args.output.parent.mkdir(parents=True,exist_ok=True)
-    args.output.write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding="utf-8")
+    identifier = attempt_id()
+    data_dir = args.data_dir or (ROOT / ".runtime" / "model-evaluation" / identifier)
+    result=evaluate(args.live, args.max_requests, data_dir, args.cases)
+    output = report_path(ROOT, "planner-live.json" if args.live else "planner-offline.json", args.output)
+    write_report(output,result)
     print(json.dumps({key:value for key,value in result.items() if key not in {"offline","live","request_outcomes"}}))
-    raise SystemExit(0 if result["offline_passed"] and (not args.live or result["live_passed"]) else 1)
+    raise SystemExit(0 if result["offline_passed"] and (not args.live or result["selected_live_passed"]) else 1)

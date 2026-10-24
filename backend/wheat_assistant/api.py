@@ -598,7 +598,8 @@ def create_app(data_dir=None, frontend_dir=None, *, store_override=None, request
     def download(identifier: str, export_id: str | None = None):
         run = store.get("run", identifier)
         path, _ = approved_artifact(run, export_id)
-        return FileResponse(path, filename="wheat_assistant_Picking_Preparation.xlsx")
+        return FileResponse(path, filename="wheat_assistant_Picking_Preparation.xlsx",
+                            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
     @app.post("/api/runs/{identifier}/handoff")
     def handoff(identifier: str):

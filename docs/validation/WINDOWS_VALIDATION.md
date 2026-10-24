@@ -2,7 +2,7 @@
 
 > Commands and code paths in this document are relative to the repository root. See the [documentation index](../README.md).
 
-**交付状态：修正候选，待新 Windows 实机回执。** 目标环境为 Windows 11 x64。v0.2.0 回执已证明安装、7项浏览器和手动三周流程可运行，但正式自动验收失败：CSV夹具换行、自动停止、过滤环境原生启动、性能数据库释放均有问题；这些旧失败不被覆盖。v0.2.1 的 macOS 通过不能代替 Windows 通过。
+**交付状态：Windows 自动 CI 已通过；人工启动停止和 Excel 仍待回执。** 代码提交`cffc0afadb4736db908e7e445eb7348cb9965220`的[完整CI](https://github.com/Family-Guy-XMUM/wheat_assistant/actions/runs/40104303886)已实际通过Windows八阶段／178测试／浏览器／源码及独立原生三周、各三重启和四次graceful停止；性能三次5.070／5.103／5.486秒，中位5.103≤10秒。此为CI Windows x64实测；目标Windows 11 x64人工使用仍须下方清单。v0.2.0旧自动失败及前三轮整改失败保留，macOS通过不替代Windows证据。
 
 演示仅含团队自造合成数据，Orbyte 为模拟；本轮不调用真实模型。源码 ZIP 不是 Windows EXE，原生 ZIP 必须在 Windows 构建。
 
@@ -14,6 +14,14 @@
 4. 运行 `Validate_Windows.bat`，或在终端运行 `Validate_Windows.bat --no-pause`。
 
 每次验证新建 `output/verification/v0.2.1/<attempt-id>/`，按顺序运行八阶段：Python测试、TS/生产构建、安装Chromium、浏览器验收、源码HTTP验收、本机原生构建、独立解压原生HTTP验收、三次规模性能验收。失败立即停止，后续步骤明确为 `not_run`；修复后重跑会创建另一目录。
+
+2026-10-24整改新增同目录的 `python-tests.json`，在pytest成功、失败或采集出错时写入计数、退出码和安全定位。仅公开测试名称（参数值被替换）、阶段、异常类、数值WinError和仓库内Python位置；原始消息、局部变量和捕获输出仍留在本机日志。CI失败时也上传这份JSON，测试失败不会因此变为成功。
+
+本批还修复两处测试主动删除只读blob缓存的Windows兼容性，并固定团队合成XLSX的时间元数据，避免同周样例跨秒重新生成时哈希变化。首次新CI的170通过／1失败定位到下载MIME断言后，API显式声明XLSX类型，不再依赖主机注册表的扩展名映射；错误映射回归修复前2失败、修复后通过。实际上传原件的哈希和业务差异校验保持。当前真实CI结果见[验收记录](ACCEPTANCE.md)最新条目；自动CI不能代替下方人工Excel和真实操作者回执。
+
+第二轮Windows已通过173测试及浏览器验收，但源码停止后的250ms端口探测只取得待完成的10035，未取得明确拒绝。新探测使用原10秒总截止内的剩余时间等待同一次连接完成，仍要求ECONNREFUSED／10061及独占绑定均成功；10035、超时和权限拒绝均不是通过证据。应用该次停止本身为退出0、无强制清理，原失败JSON保留。
+
+第三轮Windows175测试、浏览器、源码／原生三周及各三重启通过；三次性能试次数据和清理完整，但导出中位10.043秒超过原10秒标准，仍记失败。后续仅优化生成工作簿的全量验证：八表、行数、表头样式继续重开检查，公式改为安全流式扫描全部工作表XML（包括声明尺寸之外的尾部），不删行、不采样、不放宽时间目标。新增尾部公式／公式样文本回归，当前本地178测试通过，Windows结果按对应新CI回执核验。
 
 通过要求：
 
@@ -55,7 +63,7 @@ try {
 
 ## 3. 交回内容与失败处理
 
-交回本次目录内的四份JSON、人工清单、必要的应用/Excel合成数据截图，以及新原生ZIP或单独明确其未附。通过PowerShell核对ZIP：
+交回本次目录内的五份JSON（总评、pytest、源码、原生、性能）、人工清单、必要的应用/Excel合成数据截图，以及新原生ZIP或单独明确其未附。失败提前停止时如实说明哪些报告尚未生成。通过PowerShell核对ZIP：
 
 ```powershell
 Get-FileHash -Algorithm SHA256 .\dist\wheat_assistant-Windows-AMD64-v0.2.1.zip

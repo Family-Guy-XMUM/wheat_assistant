@@ -1,19 +1,31 @@
-# Preliminary submission checklist / 初赛缺项清单
+# Preliminary submission checklist / 初赛材料与缺项
 
-Checked against the local project requirements and build repository on **2026-10-24 MYT**. Deadline: **2026-10-25 07:59:59 MYT (UTC+8)**. This checklist records missing work; it is not a completed PRD, declaration or official submission receipt.
+Reviewed on **2026-10-24 MYT**, including the team's revised material files and supplied video URL. All six deliverable types have a local file or URL; the items below still prevent a final readiness claim. Deadline: **2026-10-25 07:59:59 MYT (UTC+8)**. The earlier three attachment versions were not filed in this repository and are superseded by these revised inputs.
 
-## Required before official submission
+## Materials now present
 
-| Item | Remaining work | Destination / acceptance |
-|---|---|---|
-| Team identity | Confirm the formal competition team name and use approved team identity consistently. | Root README, final documents, deck, video and portal. |
-| Official templates | Obtain and check the actual Submission Template and Technical Tools Declaration fields, naming, combined-PDF requirements and portal fields. Existing internal folder conventions do not confirm those details. | Edit a downloaded copy, preserve the shared original, then export final documents to PDF. |
-| PRD / submission document | Complete the problem, SME users, scope, human control, synthetic data, SDG 8 (8.2 / 8.3), relevant SDG 9, implementation limits and expected impact. Distinguish estimates from measurements. | `PRD.pdf`, or the actual combined submission PDF with page/section links in the [submission index](../README.md). Currently absent. |
-| Pitch deck | Create the actual PPTX explaining problem, solution, technology and expected impact. Keep it consistent with the current live product and video. No fixed preliminary slide limit was recorded, but the talk must remain concise. | `Pitch_Deck.pptx`. Currently absent. A PDF preview does not replace the PPTX. |
-| Technical & Tools Declaration | Complete the official declaration of actual models/providers, AI assistants, dependencies, data, existing materials and sponsor platforms. Update Replit usage to include full hosting plus PostgreSQL, in addition to Status Guard development. Earlier filling guides are reference material. | `Technical_Tools_Declaration.pdf`, or the template's actual combined-file location. Currently absent. Link the [Replit proof](evidence/README.md). |
-| Public YouTube video | Record/edit/upload a **5–7 minute public** pitch including actual prototype operation. Confirm processing and playback, then record the real URL. | Root README and [submission index](../README.md). No URL exists in the current repository. |
-| Source delivery | Review and commit this directory reorganization, push the selected version, confirm public access and record the final full commit SHA. Keep the demonstrated runtime and submitted behavior aligned. | Existing [public GitHub repository](https://github.com/Family-Guy-XMUM/wheat_assistant). Its existing history has identity markers that need review; none are reproduced here. |
-| Final access and portal receipt | Check prototype, video, documents and source from another device. Verify any required reviewer permissions, submit the actual repository link in the portal and retain the receipt/version. | Formal submission and receipt are not yet verified. |
+| Material | File and status |
+|---|---|
+| Team name | **Family Guy**, consistent in both revised PDFs and the revised deck. The approved official identity fields remain in the PDFs. |
+| Combined preliminary proposal / PRD | [SDC2026_FamilyGuy_Preliminary.pdf](SDC2026_FamilyGuy_Preliminary.pdf), 11 pages, received and preserved unchanged. It follows the supplied template's single-PDF naming; no separate `PRD.pdf` is required. |
+| Technical & Tools Declaration | [SDC2026_FamilyGuy_TechDeclaration.pdf](SDC2026_FamilyGuy_TechDeclaration.pdf), 13 pages, with the requested storage correction on pages 3 and 5. |
+| Pitch deck | [Pitch_Deck.pptx](Pitch_Deck.pptx), 12 slides, with the requested storage correction on slide 8 and its speaker note. |
+| Public prototype and Replit proof | [Live prototype](https://wheat-assistant.replit.app) and [evidence index](evidence/README.md). The app loaded in a signed-out browser, showed its independent cloud workspace / configured API, and `/healthz` returned `{"status":"ok"}` during this review. |
+| Source repository and run instructions | [Public GitHub repository](https://github.com/Family-Guy-XMUM/wheat_assistant), [source setup](../../README.md), [Apache-2.0 license](../../LICENSE), backend/frontend source and dependency locks are present. Formal-file and final-version synchronization remain pending. |
+| Pitch video | [Wheat Assistant by Family Guy](https://youtu.be/Fh8PB-QlRbw), displayed duration **7:00**. Signed-out playback and an actual prototype-demo segment were sampled. The uploader has confirmed **Public** visibility; a fresh signed-out watch page no longer shows the Unlisted marker. |
+
+Both supplied PDFs visibly contain signature images and the date 2026/10/24. This task does not authenticate signatures. At the team's request, the declaration's storage wording has now been corrected; the existing signature page is visually unchanged. Its signers must review the corrected statements again before submission.
+
+## Remaining before official submission
+
+| Item | Concrete next step |
+|---|---|
+| Proposal consistency | Physical page 5 still describes pandas and SQLite as the planned stack while also saying the prototype is deployed. The current implementation uses CSV / openpyxl processing, **PostgreSQL in the cloud and SQLite locally**; pandas is not in the application dependencies. Revise this page to match the submitted implementation, then obtain the signers' review. The declaration and deck already distinguish cloud/local storage. |
+| Declaration completeness | Physical page 2 visibly retains `Submission Deadline: [Insert date]`; replace it with **2026-10-25 07:59:59 MYT (UTC+8)**. The §2.2 table on physical pages 3–4 lists Python, TypeScript, React/react-dom, Vite/plugin-react, FastAPI and Uvicorn, but omits used libraries such as Pydantic, SQLAlchemy, openpyxl, HTTPX and the cloud psycopg driver, plus other direct dependencies. Complete their versions / licenses from `pyproject.toml`, `uv.lock` and `frontend/package-lock.json`; account for PostgreSQL and the actual hosting configuration, then obtain signer review. |
+| Final source / material version | Public main was checked at `84b0c474ebf47e778f20279db796076cc5e1e420`; it still lacks the two local PDFs and PPTX. The validated fixes are separately on `codex/ci-model-fixes` at `9f20677af3e9934a87a6e7e02985eda05ec0c942`. Review and integrate the selected final code and corrected materials, commit/push the README/video updates, and record the full final SHA. Check the demonstrated behavior against that exact source and redeploy any selected runtime changes. No merge, push or deployment was performed by this link review. |
+| Portal and cross-device access | Verify the prototype, video, source and PDFs/PPTX from another device; check actual portal fields and any required reviewer access, submit the repository link and preserve the receipt. Portal submission has not been verified. |
+
+The revised files resolve the earlier team-name mismatch and the claim that Replit hosting was only a future plan. The later repair-branch successes below retain their source boundary and do not erase the earlier Windows or model-quality failures. The 30% time-saving target remains an explicit planning target, not a measured customer result.
 
 ## Verification and declaration items still open
 
@@ -21,8 +33,8 @@ These are separate from the six deliverables; the project requirements do not ma
 
 | Item | Current boundary / next step |
 |---|---|
-| Windows v0.2.1 | The [hosted CI run for base commit `8b16d957`](https://github.com/Family-Guy-XMUM/wheat_assistant/actions/runs/40077140352) completed on 2026-10-24: macOS passed; Windows setup and launcher prerequisites passed, but versioned acceptance failed during `python_tests`. Resolve that failure and obtain new Windows source/native, restart, performance and separate human Excel receipts before claiming Windows verification. Use [the Windows handoff](../../docs/validation/WINDOWS_VALIDATION.md). The public web prototype remains the available demonstration route. |
-| Live-model quality | The six recorded cases consumed twelve authorized requests: one passed after repair, five failed; there were no first-attempt passes. Declare this limitation. Further provider evaluation requires separately authorized request budget; no extra model calls are part of this directory task. Deterministic editable setup remains usable. |
+| Windows v0.2.1 | The [latest CI](https://github.com/Family-Guy-XMUM/wheat_assistant/actions/runs/40106221040) at repair-branch commit `9f20677` completed successfully on Windows and macOS. Recorded Windows evidence: 178 tests, all eight automatic stages, source/native three-week journeys, restarts / graceful stops, and 8.774-second export median within the unchanged 10-second target. Separate human launch, Ctrl+C and Excel checks remain pending. These fixes are not yet in main or the public deployment. See [the Windows handoff](../../docs/validation/WINDOWS_VALIDATION.md); historical failures remain recorded. |
+| Live-model quality | The repair batch used 13 of 14 authorized requests in total. Its final six synthetic cases passed on their first attempts in three subsets with identical planner / fixture hashes; prior 12-request and diagnostic failures remain recorded. Six cases are bounded evidence, and the improved planner has not reached main or the public deployment. See [acceptance evidence](../../docs/validation/ACCEPTANCE.md). This link review made no provider calls; deterministic editable setup remains usable. |
 | RunPod applicability | No team-run GPU training/fine-tuning or RunPod job is recorded. The sponsor requirement's application to hosted third-party inference APIs is still unconfirmed. Check the actual requirement before finalizing the declaration and do not invent platform proof. |
 | Replit evidence | A public live deployment URL is already available as one of the recorded accepted proof options; an additional account screenshot is not automatically required. Keep the deployment and reviewed proof accessible during review. See [evidence](evidence/README.md). |
 | Privacy | Existing Git history contains non-anonymous identity markers. Resolve the permitted public team identity and any required remediation with the repository owner; this task does not rewrite history. Check final Office/PDF metadata and screenshots before upload. Keep credentials and unrelated account data out. |

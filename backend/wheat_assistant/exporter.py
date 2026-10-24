@@ -6,7 +6,9 @@ import tempfile
 from copy import copy
 from io import BytesIO
 from pathlib import Path
+from zipfile import ZipFile
 
+from defusedxml.ElementTree import iterparse
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 
@@ -153,10 +155,20 @@ def _verify_export(path, expected_rows):
                     )
                 except Exception as exc:
                     raise ValueError("Exported workbook contains an invalid style") from exc
-            for row in sheet.iter_rows():
-                for cell in row:
-                    if cell.data_type == "f":
-                        raise ValueError("Exported workbook contains formulas")
+        # Stream every worksheet XML member instead of constructing another
+        # ReadOnlyCell for every output cell merely to check its formula type.
+        # This also covers cells beyond an incorrect worksheet dimension.
+        with ZipFile(path) as archive:
+            worksheets = [info for info in archive.infolist()
+                          if info.filename.startswith("xl/worksheets/") and info.filename.endswith(".xml")]
+            if len(worksheets) != len(SHEET_NAMES) or len({info.filename for info in worksheets}) != len(SHEET_NAMES):
+                raise ValueError("Exported workbook has unexpected worksheet parts")
+            for info in worksheets:
+                with archive.open(info) as stream:
+                    for _, element in iterparse(stream, events=("end",), forbid_dtd=True):
+                        if element.tag.rsplit("}", 1)[-1] == "f":
+                            raise ValueError("Exported workbook contains formulas")
+                        element.clear()
     finally:
         workbook.close()
 
