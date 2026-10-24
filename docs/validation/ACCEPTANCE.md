@@ -4,9 +4,13 @@
 
 ## 2026-10-24 CI and planner remediation
 
-The isolated code candidate passed 173 Python tests; the preceding candidate also passed all 8 browser acceptance cases. The existing assertions remain; 25 regression cases cover sanitized failure evidence, read-only test caches, model output boundaries, reproducible synthetic XLSX files and the exported workbook's MIME type.
+The isolated code candidate passed 175 Python tests. The preceding Windows and macOS CI candidate also passed all 8 browser acceptance cases. The existing assertions remain; 27 regression cases cover sanitized failure evidence, read-only test caches, model output boundaries, reproducible synthetic XLSX files, the exported workbook's MIME type and delayed connection refusal.
 
-The [first remediation CI run](https://github.com/Family-Guy-XMUM/wheat_assistant/actions/runs/40102119411) passed macOS but exposed one Windows failure: the XLSX download inherited an incorrect MIME mapping from its host. The API now declares the XLSX media type explicitly. Two simulated incorrect host mappings failed before the fix and passed afterward. A subsequent complete Windows CI run is required; the historical results below remain unchanged.
+The [first remediation CI run](https://github.com/Family-Guy-XMUM/wheat_assistant/actions/runs/40102119411) passed macOS but exposed one Windows failure: the XLSX download inherited an incorrect MIME mapping from its host. The API now declares the XLSX media type explicitly. Two simulated incorrect host mappings failed before the fix and passed afterward.
+
+The [second run](https://github.com/Family-Guy-XMUM/wheat_assistant/actions/runs/40102695166) passed 173 tests and browser acceptance on Windows, then failed its source port-release probe. The app had exited gracefully with code 0 and no forced cleanup; three weeks of business results were correct. Its 250ms connection probes repeatedly returned pending Winsock error 10035. A probe now uses the remaining original 10-second deadline so it can receive an explicit refusal before checking exclusive rebinding. Error 10035, a timeout or access denial still cannot establish release. Delayed-refusal and never-completing-connection regressions cover both outcomes.
+
+Current results are recorded per commit in the [remediation branch workflow history](https://github.com/Family-Guy-XMUM/wheat_assistant/actions?query=branch%3Acodex%2Fci-model-fixes). Windows automatic acceptance requires all eight stages and matching source/native/performance receipts. Operator launch, Ctrl+C and Excel checks remain separate; the historical results below retain their original dates and outcomes.
 
 The planner still uses `agnes-2.5-flash` and FlowSpec v1. It now validates the complete response, input references and unconfirmed status decisions, allows at most one format repair, and keeps ambiguous statuses on Hold for human review. A structured example and temperature 0 improve output consistency. Rejections, truncation, malformed responses and token counts are recorded without exposing provider payloads or credentials.
 

@@ -61,7 +61,10 @@ def released_port(port, timeout=10):
     last_bind_error = None
     while time.monotonic() < deadline:
         with socket.socket() as probe:
-            probe.settimeout(.25)
+            # A Windows refusal may take longer than 250ms to complete. Keep
+            # this attempt alive within the original overall deadline instead
+            # of repeatedly restarting a still-pending connection (10035).
+            probe.settimeout(max(.001, deadline - time.monotonic()))
             last_code = probe.connect_ex(("127.0.0.1", port))
         if last_code in {errno.EACCES, errno.EPERM, 10013}:
             raise RuntimeError("Port release check was denied by the operating system")
@@ -74,7 +77,7 @@ def released_port(port, timeout=10):
                 last_bind_error = exc.errno
                 if exc.errno not in {errno.EADDRINUSE, 10048}:
                     raise
-        time.sleep(.05)
+        time.sleep(min(.05, max(0, deadline - time.monotonic())))
     error = RuntimeError("Port did not become refused and bindable before the deadline")
     error.port_diagnostics = {"last_connection_error": last_code, "last_bind_error": last_bind_error}
     raise error
