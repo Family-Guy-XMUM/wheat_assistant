@@ -25,8 +25,9 @@ def main():
     source_report = report_dir / "windows-source-release.json"
     native_report = report_dir / "windows-native-release.json"
     performance_report = report_dir / "windows-performance.json"
+    tests_report = report_dir / "python-tests.json"
     steps = [
-        ("python_tests", [sys.executable,"-m","pytest","-q"]),
+        ("python_tests", [sys.executable,"-m","pytest","-q","-p","scripts.pytest_evidence","--safe-report",str(tests_report)]),
         ("typescript_and_build", ["npm.cmd","--prefix","frontend","run","build"]),
         ("browser_install", ["npm.cmd","--prefix","frontend","exec","--","playwright","install","chromium"]),
         ("browser_acceptance", ["npm.cmd","--prefix","frontend","test"]),
@@ -57,6 +58,13 @@ def main():
                              "winerror":getattr(exc,"winerror",None)})
             # Recompute after the build: frontend output belongs to this attempt.
             report.update(candidate_info(ROOT))
+            if name == "python_tests" and tests_report.is_file():
+                tests = json.loads(tests_report.read_text(encoding="utf-8"))
+                report["python_tests"] = {"file": tests_report.name, "counts": tests["counts"],
+                                          "completed": tests["completed"], "exit_code": tests["exit_code"]}
+                print("Python test summary: " + json.dumps(report["python_tests"], sort_keys=True), flush=True)
+                for failure in tests["failures"]:
+                    print("Python test failure: " + json.dumps(failure, sort_keys=True), flush=True)
             write_report(target, report)
             if not step["passed"]:
                 for pending in report["steps"][index+1:]:

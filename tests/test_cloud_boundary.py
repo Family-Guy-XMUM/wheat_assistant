@@ -1,5 +1,4 @@
 import hashlib
-import shutil
 
 import pytest
 from fastapi import FastAPI, Request
@@ -66,7 +65,7 @@ def test_host_validation_and_no_cors_preflight(database):
     assert client.options("/api/session", headers={"Origin": "https://attacker.example"}).status_code == 403
 
 
-def test_files_and_records_survive_cache_loss_and_remain_scoped(database):
+def test_files_and_records_survive_cache_loss_and_remain_scoped(database, lose_cache):
     first, second = "a" * 64, "b" * 64
     database.new_workspace(first)
     database.new_workspace(second)
@@ -74,7 +73,7 @@ def test_files_and_records_survive_cache_loss_and_remain_scoped(database):
     original = b"sku,quantity\nSYNTHETIC-1,5\n"
     database.scope(first).write_blob("files", "orders.csv", original)
     database.scope(first).write_blob("artifacts", "export.xlsx", b"synthetic export")
-    shutil.rmtree(database.cache_root)
+    lose_cache(database.cache_root)
     assert database.scope(first).get("run", saved["id"])["status"] == "completed"
     assert database.scope(first).blob_path("files", "orders.csv").read_bytes() == original
     assert database.scope(first).blob_path("artifacts", "export.xlsx").read_bytes() == b"synthetic export"
