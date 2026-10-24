@@ -2,6 +2,37 @@
 
 > Commands and code paths in this document are relative to the repository root. See the [documentation index](../README.md). This file preserves historical local acceptance results; current cloud deployment evidence is indexed [separately](../../Submission/preliminary/evidence/README.md).
 
+## 2026-10-24 CI and planner remediation
+
+The isolated code candidate passed 173 Python tests; the preceding candidate also passed all 8 browser acceptance cases. The existing assertions remain; 25 regression cases cover sanitized failure evidence, read-only test caches, model output boundaries, reproducible synthetic XLSX files and the exported workbook's MIME type.
+
+The [first remediation CI run](https://github.com/Family-Guy-XMUM/wheat_assistant/actions/runs/40102119411) passed macOS but exposed one Windows failure: the XLSX download inherited an incorrect MIME mapping from its host. The API now declares the XLSX media type explicitly. Two simulated incorrect host mappings failed before the fix and passed afterward. A subsequent complete Windows CI run is required; the historical results below remain unchanged.
+
+The planner still uses `agnes-2.5-flash` and FlowSpec v1. It now validates the complete response, input references and unconfirmed status decisions, allows at most one format repair, and keeps ambiguous statuses on Hold for human review. A structured example and temperature 0 improve output consistency. Rejections, truncation, malformed responses and token counts are recorded without exposing provider payloads or credentials.
+
+| Final model case | First attempt | Business result |
+|---|---|---|
+| Chinese headers | Passed | Observed columns mapped correctly |
+| Ordered versus shipped quantity | Passed | Ordered quantity selected |
+| Unknown product alias | Passed | Held without an invented alias |
+| Unknown unit | Passed | Held without an invented conversion |
+| Partially shipped | Passed | Held as an exception |
+| Prompt injection in source data | Passed | Untrusted instructions ignored; partial shipping held |
+
+This remediation used **13 of 14 authorized HTTP requests**: 7 diagnostic requests, followed by 6 first-attempt passes on the final planner. The six final cases were run in three subsets (2 + 3 + 1), with identical planner and fixture hashes, then independently revalidated and scored together using their stored outputs. They were not one uninterrupted full-suite run. No answers or expected results were manually changed. The earlier 12-request failure and the initial diagnostic failures are retained.
+
+Final planner SHA-256: `8d1a9137029ff70d2f0c482f3ec854f73e6911fb31d3c283efd35ba22428cf0c`; evaluation fixtures SHA-256: `fb9f8c4b435226ea39bff5cd77a89b74d04d3de9d6fd8e133d3cb07acbda729f`. The local evidence receipt is `output/verification/remediation-20261024-213859/planner-quality.json`; it is not a committed repository file. Six synthetic cases provide bounded evidence, not a general model reliability guarantee.
+
+Run the deterministic fixture oracle without a provider call:
+
+```sh
+uv run python scripts/evaluate_planner.py
+```
+
+Live evaluation requires explicit `--live` and configured model credentials. Reuse `--data-dir` for the same experiment: its request limit persists across commands and UTC dates. `--max-requests` defaults to 12 and permits up to 14; format repairs count toward the limit. A selected subset reports `selected_live_passed` separately and cannot claim full-suite `live_passed`.
+
+The following sections describe the earlier v0.2.1 and v0.2.0 acceptance state at their respective dates.
+
 **状态：修正候选，待 Windows v0.2.1 实机复验。** 详细命令和逐项回执要求见 [WINDOWS_VALIDATION.md](WINDOWS_VALIDATION.md)。本轮没有新增真实模型调用；原有模型质量未通过的结论保留。
 
 本轮修正：CSV夹具字节保护、Windows环境大小写、SQLite显式释放、拥有的进程树停止/端口/重启验证、逐批明确Hold确认。FlowSpec v1、旧摘要和历史结果保持；新审批缺少或带过期状态确认返回409。

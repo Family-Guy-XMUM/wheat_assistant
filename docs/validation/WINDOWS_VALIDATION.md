@@ -15,6 +15,10 @@
 
 每次验证新建 `output/verification/v0.2.1/<attempt-id>/`，按顺序运行八阶段：Python测试、TS/生产构建、安装Chromium、浏览器验收、源码HTTP验收、本机原生构建、独立解压原生HTTP验收、三次规模性能验收。失败立即停止，后续步骤明确为 `not_run`；修复后重跑会创建另一目录。
 
+2026-10-24整改新增同目录的 `python-tests.json`，在pytest成功、失败或采集出错时写入计数、退出码和安全定位。仅公开测试名称（参数值被替换）、阶段、异常类、数值WinError和仓库内Python位置；原始消息、局部变量和捕获输出仍留在本机日志。CI失败时也上传这份JSON，测试失败不会因此变为成功。
+
+本批还修复两处测试主动删除只读blob缓存的Windows兼容性，并固定团队合成XLSX的时间元数据，避免同周样例跨秒重新生成时哈希变化。首次新CI的170通过／1失败定位到下载MIME断言后，API显式声明XLSX类型，不再依赖主机注册表的扩展名映射；错误映射回归修复前2失败、修复后通过。实际上传原件的哈希和业务差异校验保持。当前真实CI结果见[验收记录](ACCEPTANCE.md)最新条目；自动CI不能代替下方人工Excel和真实操作者回执。
+
 通过要求：
 
 - `windows-validation.json` 的八阶段全部 `passed`，自动总评 `automated_passed: true`（`passed`为兼容别名）。`acceptance_status`仍为 `pending_operator_confirmation`，不能据此宣称人工验收完成。
@@ -55,7 +59,7 @@ try {
 
 ## 3. 交回内容与失败处理
 
-交回本次目录内的四份JSON、人工清单、必要的应用/Excel合成数据截图，以及新原生ZIP或单独明确其未附。通过PowerShell核对ZIP：
+交回本次目录内的五份JSON（总评、pytest、源码、原生、性能）、人工清单、必要的应用/Excel合成数据截图，以及新原生ZIP或单独明确其未附。失败提前停止时如实说明哪些报告尚未生成。通过PowerShell核对ZIP：
 
 ```powershell
 Get-FileHash -Algorithm SHA256 .\dist\wheat_assistant-Windows-AMD64-v0.2.1.zip
