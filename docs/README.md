@@ -6,9 +6,9 @@ Read the [repository README](../README.md) for installation and the three-week i
 |---|---|
 | [Contracts](reference/CONTRACT.md) | Validated workflow, deterministic processing, approval and recovery contracts; preserves contributor boundaries |
 | [Replit deployment](deployment/REPLIT_DEPLOYMENT.md) | Public cloud entry, PostgreSQL persistence, anonymous browser workspaces, configuration and recovery |
-| [Local acceptance](validation/ACCEPTANCE.md) | Historical local v0.2 / v0.2.1 evidence, later repair-branch Windows/model results and remaining human checks |
+| [Local acceptance](validation/ACCEPTANCE.md) | Historical local v0.2/v0.2.1 evidence, the verified repair CI results now included in main's `43d1fd3` tree and live release `a37ccc68`, and remaining human checks |
 | [Windows handoff](validation/WINDOWS_VALIDATION.md) | Windows setup, eight-stage automation and separate human / Excel confirmation |
-| [Replit evidence](../Submission/preliminary/evidence/README.md) | Public deployment proof URL and original Status Guard source provenance |
+| [Replit evidence](../Submission/preliminary/evidence/README.md) | Public deployment proof URL, live release `a37ccc68`, the 2026-10-25 anonymous probe and original Status Guard provenance |
 | [Submission checklist](../Submission/preliminary/README.md) | Formal materials, pitch-video link and remaining submission / verification checks |
 
-Source, native desktop and Replit upload archives include this public documentation through an explicit file allowlist. Local logs and account evidence must be reviewed separately before publication. Native desktop and minimal Replit archives are runtime distributions; the public GitHub repository is the competition source and submission entry.
+The Replit upload archive includes this public documentation through an explicit file allowlist; source/native builds use the same allowlist when rebuilt. The existing native archive is an earlier build and is not reissued in this batch. Local logs and account evidence must be reviewed separately before publication. Native desktop and minimal Replit archives are runtime distributions; the public GitHub repository is the competition source and submission entry. The final PDF/documentation status batch is committed and pushed to public main; live release `a37ccc68` was published from the verified 60-file package. The pre-publication ZIP contains the runtime and three formal materials, not the final six Markdown status bytes.
