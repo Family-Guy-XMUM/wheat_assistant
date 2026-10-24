@@ -1,5 +1,7 @@
 # wheat_assistant v0.2.1 修正候选验收
 
+> Commands and code paths in this document are relative to the repository root. See the [documentation index](../README.md). This file preserves historical local acceptance results; current cloud deployment evidence is indexed [separately](../../Submission/preliminary/evidence/README.md).
+
 **状态：修正候选，待 Windows v0.2.1 实机复验。** 详细命令和逐项回执要求见 [WINDOWS_VALIDATION.md](WINDOWS_VALIDATION.md)。本轮没有新增真实模型调用；原有模型质量未通过的结论保留。
 
 本轮修正：CSV夹具字节保护、Windows环境大小写、SQLite显式释放、拥有的进程树停止/端口/重启验证、逐批明确Hold确认。FlowSpec v1、旧摘要和历史结果保持；新审批缺少或带过期状态确认返回409。

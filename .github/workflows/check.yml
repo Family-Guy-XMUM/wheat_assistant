@@ -2,7 +2,7 @@ name: Verify and build native local app
 on:
   workflow_dispatch:
   push:
-    paths: ["backend/**", "frontend/**", "tests/**", "scripts/**", "pyproject.toml", "uv.lock", ".gitattributes", "Start_wheat_assistant.bat", "Setup_Windows.bat", "Validate_Windows.bat", ".github/workflows/**"]
+    paths: ["README.md", "docs/**", "Submission/**", ".replit", "backend/**", "frontend/**", "tests/**", "scripts/**", "pyproject.toml", "uv.lock", ".gitattributes", "Start_wheat_assistant.bat", "Setup_Windows.bat", "Validate_Windows.bat", ".github/workflows/**"]
 permissions:
   contents: read
 jobs:

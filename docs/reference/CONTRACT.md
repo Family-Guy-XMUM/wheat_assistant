@@ -1,5 +1,7 @@
 # Foundation contracts v1
 
+> Commands and code paths in this document are relative to the repository root. See the [documentation index](../README.md).
+
 All examples are synthetic. Coordinator owns this contract; tests may depend on it but must not edit it.
 
 ## Pure engine

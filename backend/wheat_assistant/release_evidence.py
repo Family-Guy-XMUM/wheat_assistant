@@ -11,16 +11,27 @@ from pathlib import Path
 
 from wheat_assistant import __version__
 
-ROOT_FILES = {"README.md", "LICENSE", "AGENTS.md", "CONTRACT.md", "REPLIT_MODULE.json", ".env.example", ".gitignore", ".gitattributes",
-              "pyproject.toml", "uv.lock", "Start_wheat_assistant.command", "Start_wheat_assistant.bat", "Setup_Windows.bat", "Validate_Windows.bat",
-              "WINDOWS_VALIDATION.md", "ACCEPTANCE.md"}
+ROOT_FILES = {"README.md", "LICENSE", "AGENTS.md", ".env.example", ".gitignore", ".gitattributes", ".replit",
+              "pyproject.toml", "uv.lock", "Start_wheat_assistant.command", "Start_wheat_assistant.bat", "Setup_Windows.bat", "Validate_Windows.bat"}
+# Only reviewed public documentation is distributed; arbitrary evidence files are not swept in.
+DOCUMENT_FILES = {
+    "Submission/README.md",
+    "Submission/preliminary/README.md",
+    "Submission/preliminary/evidence/README.md",
+    "Submission/preliminary/evidence/REPLIT_MODULE.json",
+    "docs/README.md",
+    "docs/deployment/REPLIT_DEPLOYMENT.md",
+    "docs/reference/CONTRACT.md",
+    "docs/validation/ACCEPTANCE.md",
+    "docs/validation/WINDOWS_VALIDATION.md",
+}
 TREES = ("backend/wheat_assistant", "frontend/src", "frontend/public", "frontend/e2e", "frontend/dist", "tests", "scripts", ".github/workflows")
 IGNORED = {"__pycache__", ".pytest_cache", ".hypothesis", ".DS_Store", "node_modules", ".venv", ".env", ".git", ".runtime"}
 
 
 def source_files(root):
     root = Path(root)
-    files = {root / name for name in ROOT_FILES if (root / name).is_file()}
+    files = {root / name for name in ROOT_FILES | DOCUMENT_FILES if (root / name).is_file()}
     for tree in TREES:
         files.update(p for p in (root / tree).rglob("*") if p.is_file() and not IGNORED.intersection(p.relative_to(root).parts))
     if (root / "frontend").is_dir():

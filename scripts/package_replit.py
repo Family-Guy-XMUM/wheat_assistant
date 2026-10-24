@@ -9,12 +9,12 @@ import zipfile
 from pathlib import Path
 
 from check_release_privacy import markers
+from wheat_assistant.release_evidence import DOCUMENT_FILES
 
 ROOT = Path(__file__).resolve().parents[1]
-FILES = {".replit", "pyproject.toml", "uv.lock", "LICENSE", "README.md", "ACCEPTANCE.md", "REPLIT_MODULE.json",
-         "REPLIT_DEPLOYMENT.md", "frontend/index.html", "frontend/package.json", "frontend/package-lock.json",
+FILES = {".replit", "pyproject.toml", "uv.lock", "LICENSE", "README.md", "frontend/index.html", "frontend/package.json", "frontend/package-lock.json",
          "frontend/tsconfig.json", "frontend/vite.config.ts", "scripts/replit_build.sh", "scripts/replit_start.sh",
-         "scripts/replit_dev.sh", "tests/test_cloud_boundary.py", "tests/test_cloud_journey.py"}
+         "scripts/replit_dev.sh", "tests/test_cloud_boundary.py", "tests/test_cloud_journey.py"} | DOCUMENT_FILES
 
 
 def snapshot():

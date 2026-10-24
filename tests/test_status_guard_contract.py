@@ -1,6 +1,6 @@
 """Independent contract tests for ``wheat_assistant.status_guard.check_status_coverage``.
 
-Written from CONTRACT.md only. All rows and channels are synthetic. The tests
+Written from docs/reference/CONTRACT.md only. All rows and channels are synthetic. The tests
 cover known include/exclude statuses, trimmed matching, unknown and missing
 values, unconfigured channels, empty input, channel isolation and the no-mutation
 guarantee. If ``wheat_assistant.status_guard`` is missing the import must fail; there is

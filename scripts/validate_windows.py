@@ -77,7 +77,7 @@ def main():
     print("Automated validation: "+("PASS" if report["passed"] else "FAIL"))
     print("Report:", target.relative_to(ROOT).as_posix())
     print("Keep .runtime/windows-validation logs private. New attempts never overwrite earlier receipts.")
-    print("Record actual launch / Ctrl+C / restart / Excel results separately in WINDOWS_VALIDATION.md.")
+    print("Record actual launch / Ctrl+C / restart / Excel results separately using docs/validation/WINDOWS_VALIDATION.md.")
     return 0 if report["passed"] else 1
 
 

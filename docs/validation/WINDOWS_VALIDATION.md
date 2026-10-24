@@ -1,5 +1,7 @@
 # Windows x64 v0.2.1 复验交接
 
+> Commands and code paths in this document are relative to the repository root. See the [documentation index](../README.md).
+
 **交付状态：修正候选，待新 Windows 实机回执。** 目标环境为 Windows 11 x64。v0.2.0 回执已证明安装、7项浏览器和手动三周流程可运行，但正式自动验收失败：CSV夹具换行、自动停止、过滤环境原生启动、性能数据库释放均有问题；这些旧失败不被覆盖。v0.2.1 的 macOS 通过不能代替 Windows 通过。
 
 演示仅含团队自造合成数据，Orbyte 为模拟；本轮不调用真实模型。源码 ZIP 不是 Windows EXE，原生 ZIP 必须在 Windows 构建。

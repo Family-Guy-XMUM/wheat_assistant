@@ -1,6 +1,6 @@
 """Independent contract tests for ``wheat_assistant.engine.process_orders``.
 
-These tests are written from CONTRACT.md only. Every row, product, channel and
+These tests are written from docs/reference/CONTRACT.md only. Every row, product, channel and
 value below is synthetic. Assertions use stable disposition names and reason
 shape, never human-readable reason prose. If ``wheat_assistant.engine`` is missing the
 module import must fail; this file deliberately does not skip or ship a stub.

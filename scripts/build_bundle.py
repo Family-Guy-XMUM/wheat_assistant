@@ -8,6 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 from wheat_assistant import __version__
+from wheat_assistant.release_evidence import DOCUMENT_FILES
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -28,9 +29,11 @@ def main():
     bundle = ROOT / "dist" / "wheat_assistant"
     shutil.copyfile(ROOT / ".env.example", bundle / ".env.example")
     shutil.copyfile(ROOT / "LICENSE", bundle / "LICENSE")
-    for name in ("README.md", "ACCEPTANCE.md"):
+    for name in sorted({"README.md"} | DOCUMENT_FILES):
         if (ROOT / name).is_file():
-            shutil.copyfile(ROOT / name, bundle / name)
+            destination = bundle / name
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / name, destination)
     (bundle / "START_HERE.txt").write_text(
         "wheat_assistant local spreadsheet workflow assistant\n\n"
         "Launch wheat_assistant.exe (Windows) or wheat_assistant (macOS). A local browser window opens.\n"

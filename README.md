@@ -6,9 +6,47 @@ A web prototype for small wholesalers: combine channel order files, confirm busi
 
 **Live Prototype URL: [https://wheat-assistant.replit.app](https://wheat-assistant.replit.app)** — no Replit login required. The public three-week workflow and actual Excel download were verified on 2026-10-24 MYT. Each browser gets a separate synthetic demo workspace; keep its cookies to return to saved history. The online AI entry is configured, while the existing model-quality limitations below remain.
 
-For the separate Replit cloud entry point, browser-private workspaces and PostgreSQL persistence, see [REPLIT_DEPLOYMENT.md](REPLIT_DEPLOYMENT.md). The desktop entry point remains available locally.
+For the separate Replit cloud entry point, browser-private workspaces and PostgreSQL persistence, see [Replit deployment](docs/deployment/REPLIT_DEPLOYMENT.md). The desktop entry point remains available locally.
 
 The application and source package were renamed from MaiZi to `wheat_assistant` on 2026-10-23. Earlier verification receipts retain their original names and hashes. Rebuilt artifacts use the new name; earlier Windows and live-model limitations still apply.
+
+## Competition and deliverables
+
+SDC Hackathon 2026 · Domain 2: Orbyte Smart SME Challenge. The formal team name has not yet been recorded in this repository. The project supports SDG 8 (8.2 and 8.3), with SDG 9 relevant to its reusable workflow capability; no measured customer impact is claimed.
+
+- [Public source repository](https://github.com/Family-Guy-XMUM/wheat_assistant)
+- [Submission index and current readiness](Submission/README.md)
+- [Preliminary checklist and missing materials](Submission/preliminary/README.md)
+- [Replit evidence and provenance](Submission/preliminary/evidence/README.md)
+- [Engineering documentation](docs/README.md)
+
+The live prototype is available. The formal submission documents and pitching video are still missing from the repository; repository organization does not complete the competition submission. The recorded preliminary deadline is **2026-10-25 07:59:59 MYT (UTC+8)**.
+
+## Repository layout
+
+```text
+wheat_assistant/
+├── README.md, LICENSE              # reviewer entry and Apache-2.0
+├── backend/wheat_assistant/        # FastAPI, workflows, SQLite / cloud storage
+├── frontend/                      # React / TypeScript and browser tests
+├── tests/                         # independent contracts and regression tests
+├── scripts/                       # build, package, verify and Replit commands
+├── docs/
+│   ├── README.md                  # technical document index
+│   ├── reference/CONTRACT.md
+│   ├── deployment/REPLIT_DEPLOYMENT.md
+│   └── validation/                # local acceptance and Windows handoff
+├── Submission/
+│   ├── README.md                  # six-deliverable status and access links
+│   └── preliminary/
+│       ├── README.md              # remaining work and intended filenames
+│       └── evidence/              # Replit proof URL and original provenance
+├── Start_wheat_assistant.*        # daily desktop launchers
+├── Setup_Windows.bat, Validate_Windows.bat
+└── pyproject.toml, uv.lock, .replit, .env.example
+```
+
+Directory names under `Submission/` are the team's organization convention; the actual official templates still need checking. Missing PDF/PPTX files and a finals directory have not been created. Local `.env`, databases, `state/`, `.runtime/`, `.venv/`, `node_modules/`, `build/`, `dist/` and `output/` are excluded from Git. Generated local files remain in place.
 
 ## Run from source
 
@@ -41,9 +79,9 @@ Start_wheat_assistant.bat
 
 In PowerShell, use `./Setup_Windows.bat` and `./Start_wheat_assistant.bat`. If Windows hides file extensions, look for the Windows Batch File type rather than opening the script in a text editor. No administrator privileges are requested by these scripts.
 
-For a non-interactive setup check, use `Setup_Windows.bat --no-pause`, then `Start_wheat_assistant.bat --check`. The latter checks source-launch prerequisites without starting the server. Windows CI is configured to run these commands; **The v0.2.0 Windows receipt failed overall; this v0.2.1 candidate still needs its own Windows receipt**. The app's synthetic demos work without an API key; configure live AI only in your own local `.env`.
+For a non-interactive setup check, use `Setup_Windows.bat --no-pause`, then `Start_wheat_assistant.bat --check`. The latter checks source-launch prerequisites without starting the server. Windows CI is configured to run these commands; **The v0.2.0 Windows receipt failed overall; this v0.2.1 candidate still needs a passing Windows acceptance receipt**. The app's synthetic demos work without an API key; configure live AI only in your own local `.env`.
 
-For the Windows operator handoff, run `Validate_Windows.bat` after setup and follow [WINDOWS_VALIDATION.md](WINDOWS_VALIDATION.md). It builds a Windows native ZIP on that computer and verifies source and independently extracted native applications over real local HTTP. Each attempt writes eight-stage and source/native/performance receipts under `output/verification/v0.2.1/<attempt-id>/`; previous receipts stay intact. Share only the sanitized JSON reports and manual checklist; keep the detailed local log private. A source ZIP is not a tested Windows executable.
+For the Windows operator handoff, run `Validate_Windows.bat` after setup and follow [Windows validation](docs/validation/WINDOWS_VALIDATION.md). It builds a Windows native ZIP on that computer and verifies source and independently extracted native applications over real local HTTP. Each attempt writes eight-stage and source/native/performance receipts under `output/verification/v0.2.1/<attempt-id>/`; previous receipts stay intact. Share only the sanitized JSON reports and manual checklist; keep the detailed local log private. A source ZIP is not a tested Windows executable.
 
 Optional live AI: copy `.env.example` to `.env` and configure `LLM_BASE_URL`, `LLM_MODEL`, and `LLM_API_KEY`. It uses the OpenAI-compatible chat-completions protocol, through the local backend. Keys never go to the frontend or the Replit module. No key is distributed. Header-name suggestions and all deterministic processing work without a model; that mode is explicitly labeled. Live planning sends bounded file profiles and samples to your configured provider. Default limit: 60 requests/day, 45-second timeout, at most one JSON repair attempt. Provider usage and availability depend on your own account.
 
@@ -77,7 +115,7 @@ Failed or interrupted runs can be retried with the same run ID and approved snap
 
 React/TypeScript frontend → FastAPI → validated FlowSpec → deterministic Python subprocess. Desktop mode uses SQLite; the Replit cloud entry point stores scoped approvals, inputs, results and export bytes in PostgreSQL. Rows retain source file/sheet/row and each transformation. Resource limits bound the child process; it executes only bundled operations and receives no model credentials. This is process separation, not a hardened arbitrary-code sandbox; arbitrary generated code is never accepted.
 
-`backend/wheat_assistant/status_guard.py` was developed and tested in a real Replit Free project, downloaded, hash-checked and integrated unchanged. `REPLIT_MODULE.json` records its sanitized provenance. The complete public prototype now runs on a Replit Reserved VM with Replit PostgreSQL. Cloud verification added fourteen tests, including a real PostgreSQL three-week journey and loss of the temporary file cache; the full local suite has 148 passing tests. Orbyte identity/task handoff is simulated and labeled. No fine-tuning or GPU training has been performed.
+`backend/wheat_assistant/status_guard.py` was developed and tested in a real Replit Free project, downloaded, hash-checked and integrated unchanged. [REPLIT_MODULE.json](Submission/preliminary/evidence/REPLIT_MODULE.json) records its sanitized provenance. The complete public prototype now runs on a Replit Reserved VM with Replit PostgreSQL. Cloud verification added fourteen tests, including a real PostgreSQL three-week journey and loss of the temporary file cache; the full local suite has 148 passing tests. Orbyte identity/task handoff is simulated and labeled. No fine-tuning or GPU training has been performed.
 
 ```sh
 uv run pytest -q
@@ -90,9 +128,9 @@ uv run python scripts/check_api.py   # optional; makes one real configured-provi
 uv run python scripts/build_bundle.py
 ```
 
-The build script creates an OS-native `dist/wheat_assistant-<OS>-<architecture>-v0.2.1.zip` with a source manifest. Run it on each target OS; it is not a cross-compiler. `.github/workflows/check.yml` prepares macOS/Windows checks and artifacts when run in your repository. A prepared workflow is not evidence that either hosted job has run. Development binaries are unsigned/not notarized. Submission documents and the official competition submission are separate from the live prototype.
+The build script creates an OS-native `dist/wheat_assistant-<OS>-<architecture>-v0.2.1.zip` with a source manifest. Run it on each target OS; it is not a cross-compiler. `.github/workflows/check.yml` prepares macOS/Windows checks and artifacts when run in your repository. The [hosted CI run for base commit `8b16d957`](https://github.com/Family-Guy-XMUM/wheat_assistant/actions/runs/40077140352) completed on 2026-10-24: macOS passed; Windows setup and launcher prerequisites passed, but the versioned acceptance failed during `python_tests`. This local directory reorganization has not yet run in hosted CI. Development binaries are unsigned/not notarized. Submission documents and the official competition submission are separate from the live prototype.
 
-See [ACCEPTANCE.md](ACCEPTANCE.md) for the measured v0.2 results and remaining gates. The six live-model cases used all twelve authorized requests: one succeeded after structural repair and five were rejected as invalid output. No first-attempt successes were observed. Those failures remain recorded; deterministic editable setup works without a key. Schema and repair guidance were subsequently strengthened and mock-tested, but have not received another live verification within this budget.
+See [local acceptance](docs/validation/ACCEPTANCE.md) for the measured v0.2 results and remaining gates. The six live-model cases used all twelve authorized requests: one succeeded after structural repair and five were rejected as invalid output. No first-attempt successes were observed. Those failures remain recorded; deterministic editable setup works without a key. Schema and repair guidance were subsequently strengthened and mock-tested, but have not received another live verification within this budget.
 
 AI-assisted contributions: Codex coordinated architecture/core/UI/integration and final acceptance; DeepSeek Harness authored independent contract/API/security tests and v0.2 CSV/template-export hardening with 26 additional tests; Replit Agent developed Status Guard. Independent expected results, not the planning model, verify the transformations.
 
