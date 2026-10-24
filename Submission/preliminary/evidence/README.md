@@ -4,6 +4,10 @@
 
 **Live Prototype URL: [https://wheat-assistant.replit.app](https://wheat-assistant.replit.app)**
 
+**Standalone reviewer attachment: [SDC2026_FamilyGuy_Replit_POU.pdf](replit_pou/SDC2026_FamilyGuy_Replit_POU.pdf)**
+
+This one-page POU attachment repeats the public deployment URL and the minimum Replit use and verification facts, so a reviewer can identify the proof without interpreting the full evidence index.
+
 This is the project's public interactive prototype; a Replit login is not required. The recorded organizer proof options allow a live Replit deployment URL, an accessible project-history link, or a credit-finished screenshot. The live deployment URL is the selected proof option here; there is no need to spend the remaining credits just to create a screenshot. The logged-in portal shows the existing repository submission with the correct GitHub link, **Your submission**, **API integration confirmed** and **Edit**; it displays no receipt number or exact submission time, so none is invented. Do not duplicate the existing submission.
 
 The deployment acceptance on **2026-10-24 MYT** recorded the following for the real production deployment:

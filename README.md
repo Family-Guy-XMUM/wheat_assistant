@@ -21,8 +21,21 @@ SDC Hackathon 2026 · Domain 2: Orbyte Smart SME Challenge. Team: **Family Guy**
 - [Preliminary checklist and remaining checks](Submission/preliminary/README.md)
 - [Replit evidence and provenance](Submission/preliminary/evidence/README.md)
 - [Engineering documentation](docs/README.md)
+- [Submission template map](docs/reference/SUBMISSION_TEMPLATE_MAP.md)
 
 All six preliminary deliverable types now have a local file or access link: the combined proposal PDF, Technical & Tools Declaration PDF, 12-slide PPTX, live prototype, public source repository and pitch video. The two formal PDFs and PPTX are in the final public repository commit; the final six-document status batch is pushed to public main. The portal shows the existing repository submission with the correct GitHub link, **Your submission** and **API integration confirmed**; it displays no receipt number or exact submission time, and none is invented here. The recorded preliminary deadline is **2026-10-25 07:59:59 MYT (UTC+8)**.
+
+## Submission-template alignment
+
+The reviewer-facing layout follows the supplied SDC submission example while keeping the actual application structure visible. The project uses `backend/` and `frontend/` as its source roots, `tests/` and `frontend/e2e/` for verification, `docs/` for technical references, and `Submission/` for the official preliminary materials. The existing capitalized `Submission/` path is intentional: changing its case would create avoidable link and history churn after the materials were published.
+
+The example includes a RunPod area, but this project has no team-run GPU training, fine-tuning or inference job. The repository therefore documents that boundary instead of creating an empty directory or claiming platform use. Replit deployment and proof are documented under `docs/deployment/` and `Submission/preliminary/evidence/`.
+
+The public repository names the team and product, while individual developer identities, local absolute paths, credentials, runtime databases, logs and the resource library stay outside the reviewer-facing tree. Official form fields that the team deliberately supplied remain in the two submission PDFs; that exception does not extend to source files or Git metadata. See the [template map](docs/reference/SUBMISSION_TEMPLATE_MAP.md) for the complete reviewer path.
+
+## Challenges and next steps
+
+The main engineering challenge is preserving every source row and its reason while combining inconsistent CSV/XLSX inputs, then requiring a human review before export and the simulated Orbyte handoff. The current prototype addresses that with validated workflow versions, immutable approvals, deterministic execution and explicit exception states. Remaining work is operational: complete the human Windows/Excel handoff, confirm the competition's RunPod applicability boundary for hosted inference, and keep any post-deadline changes separated from the frozen preliminary submission.
 
 ## Repository layout
 
