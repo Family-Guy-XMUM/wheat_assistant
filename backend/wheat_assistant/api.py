@@ -39,22 +39,23 @@ class BatchRequest(BaseModel):
 class DemoRequest(BaseModel):
     week: int = Field(ge=1, le=3)
 
-def create_app(data_dir=None, frontend_dir=None):
+def create_app(data_dir=None, frontend_dir=None, *, store_override=None, request_policy=None,
+               recover_on_start=True, live_ai=True, mode="local"):
     directory = data_directory(data_dir)
-    store = Store(directory)
+    store = store_override if store_override is not None else Store(directory)
     execution_lock = threading.Lock()
     export_lock = threading.Lock()
 
     @asynccontextmanager
     async def lifespan(app):
         try:
-            for run in store.list("run"):
+            for run in (store.list("run") if recover_on_start else []):
                 if run.get("status") == "running":
                     store.put("run", run["id"], {**run, "status": "interrupted", "error": "The app restarted. Retry this immutable run."})
                 current = store.get("run", run["id"])
                 if current.get("export_state") == "building":
                     store.put("run", run["id"], {**current, "export_state": "interrupted", "export_error": "The app restarted during export. Retry export."})
-            for export in store.list("export"):
+            for export in (store.list("export") if recover_on_start else []):
                 if export["status"] == "building":
                     store.put("export", export["id"], {**export, "status": "interrupted", "error": "Export interrupted by restart"})
             yield
@@ -64,9 +65,15 @@ def create_app(data_dir=None, frontend_dir=None):
     app = FastAPI(title="wheat_assistant", version=__version__, lifespan=lifespan)
     app.state.store = store
     instance_id = uuid.uuid4().hex
+    actor = "Cloud demo operator" if mode == "cloud" else "Local demo operator"
 
     @app.middleware("http")
     async def local_only(request: Request, call_next):
+        if request_policy is not None:
+            failure = request_policy.validate(request)
+            if failure is not None:
+                return failure
+            return await call_next(request)
         host = request.headers.get("host", "").split(":")[0]
         if host not in {"127.0.0.1", "localhost", "[", "testserver"}:
             return JSONResponse({"detail": "This build accepts local requests only"}, status_code=403)
@@ -89,7 +96,7 @@ def create_app(data_dir=None, frontend_dir=None):
     def assets_for(batch, validate_parser=False):
         assets = [store.get("file", key) for key in batch["file_ids"]]
         for asset in assets:
-            path = store.root / "files" / asset["storage_name"]
+            path = store.blob_path("files", asset["storage_name"])
             if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != asset["hash"]:
                 raise ValueError("An original input file changed. Upload it as a new input and confirm again.")
             if validate_parser and asset["table"].get("parser_version", 1) < 2:
@@ -129,10 +136,7 @@ def create_app(data_dir=None, frontend_dir=None):
                 store.activity("duplicate_upload", existing["id"], {"name": filename, "action": "existing asset reused"})
                 return existing
         storage_name = checksum + Path(filename).suffix.lower()
-        destination = store.root / "files" / storage_name
-        if not destination.exists():
-            destination.write_bytes(content)
-            destination.chmod(0o400)
+        store.write_blob("files", storage_name, content)
         asset = store.add("file", {"name": filename, "role": role, "channel_id": channel_id.strip(), "hash": checksum,
                                    "storage_name": storage_name, "selected_sheet": sheet_name,
                                    "size": len(content), "table": table, "profile": profile(table)})
@@ -236,8 +240,20 @@ def create_app(data_dir=None, frontend_dir=None):
 
     @app.get("/api/health")
     def health():
-        return {"status": "ok", "version": __version__, "ai_configured": bool(configured()),
-                "model": os.getenv("LLM_MODEL", "") if configured() else None, "mode": "local", "instance_id": instance_id}
+        enabled = live_ai and bool(configured())
+        return {"status": "ok", "version": __version__, "ai_configured": enabled,
+                "model": os.getenv("LLM_MODEL", "") if enabled else None, "mode": mode, "instance_id": instance_id}
+
+    @app.get("/healthz")
+    def readiness():
+        from sqlalchemy import select
+        with store.engine.connect() as connection:
+            connection.execute(select(1))
+        return {"status": "ok"}
+
+    @app.post("/api/session")
+    def session():
+        return {"mode": "local"}
 
     @app.get("/api/state")
     def state():
@@ -257,7 +273,7 @@ def create_app(data_dir=None, frontend_dir=None):
     @app.get("/api/files/{identifier}/download")
     def download_original(identifier: str):
         asset = store.get("file", identifier)
-        return FileResponse(store.root / "files" / asset["storage_name"], filename=asset["name"])
+        return FileResponse(store.blob_path("files", asset["storage_name"]), filename=asset["name"])
 
     @app.post("/api/batches")
     def create_batch(request: BatchRequest):
@@ -286,6 +302,8 @@ def create_app(data_dir=None, frontend_dir=None):
         source = store.get("flow", request.source_flow_id) if request.source_flow_id else None
         base = request.flow.model_dump() if request.flow else source["spec"] if source else suggest_flow(assets)
         if request.mode == "live":
+            if not live_ai:
+                raise HTTPException(503, "Live AI is not enabled for this demo. Use the editable setup.")
             proposed = propose_live(store, batch, assets, request.instructions, base)
         else:
             proposed = {"flow": base, "origin": "suggested_setup",
@@ -350,13 +368,13 @@ def create_app(data_dir=None, frontend_dir=None):
             version = source["rule_version"] if same else 1 + max(
                 [metadata(x)["rule_version"] for x in store.list("flow") if metadata(x)["workflow_id"] == workflow_id], default=0)
             saved = {"id": identifier_flow, "spec": spec, "spec_hash": digest(spec), "batch_id": identifier,
-                     "input_hash": report["input_hash"], "reviewed": sorted(REVIEW_GROUPS), "actor": "Local demo operator",
+                     "input_hash": report["input_hash"], "reviewed": sorted(REVIEW_GROUPS), "actor": actor,
                      "workflow_id": workflow_id, "rule_version": version, "parent_flow_id": request.source_flow_id,
                      "approval_request_hash": request_hash, "draft_id": request.draft_id,
                      "approval_policy_version": 2, "held_statuses": held, "hold_review_hash": request.hold_review_hash}
             saved = store.commit_bundle(additions=[("flow", saved), ("approval", {
                 "stage": "rules", "decision": "approved", "flow_id": identifier_flow,
-                "snapshot": digest({"input": report["input_hash"], "flow": saved["spec_hash"]}), "actor": "Local demo operator",
+                "snapshot": digest({"input": report["input_hash"], "flow": saved["spec_hash"]}), "actor": actor,
                 "approval_policy_version": 2, "held_statuses": held, "hold_review_hash": request.hold_review_hash}),
                 ("activity", {"action": "rules_approved", "subject": identifier_flow,
                               "detail": {"batch_id": identifier, "name": spec["name"], "rule_version": version}})])[0]
@@ -387,7 +405,7 @@ def create_app(data_dir=None, frontend_dir=None):
     @app.post("/api/runs/{identifier}/execute")
     def execute(identifier: str):
         if not execution_lock.acquire(blocking=False):
-            raise HTTPException(409, "Another local processing step is running")
+            raise HTTPException(409, "Another processing step is running")
         try:
             run = store.get("run", identifier)
             if run["status"] == "completed":
@@ -462,7 +480,7 @@ def create_app(data_dir=None, frontend_dir=None):
         records = [x for x in store.list("export") if x["run_id"] == run["id"]]
         if any(x.get("artifact") == run["artifact"] for x in records):
             return
-        path = store.root / "artifacts" / run["artifact"]
+        path = store.blob_path("artifacts", run["artifact"])
         if not path.is_file():
             raise ValueError("The exported file is missing. Retry export to create a verified workbook.")
         checksum = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -487,7 +505,7 @@ def create_app(data_dir=None, frontend_dir=None):
             record = record or next((x for x in records if x["status"] == "ready"), None)
         if not record or record["run_id"] != run["id"] or record["status"] != "ready":
             raise HTTPException(403, "This export is not ready for download")
-        path = store.root / "artifacts" / record["artifact"]
+        path = store.blob_path("artifacts", record["artifact"])
         if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != record["artifact_hash"]:
             raise ValueError("The exported file changed or is missing. Generate a new approved export.")
         return path, record
@@ -519,14 +537,14 @@ def create_app(data_dir=None, frontend_dir=None):
                     pass
             for old in store.list("export"):
                 if (old["run_id"], old["result_hash"], old["version"], old["status"]) == (identifier, run["result_hash"], version, "ready"):
-                    artifact = store.root / "artifacts" / old["artifact"]
+                    artifact = store.blob_path("artifacts", old["artifact"])
                     if artifact.is_file() and hashlib.sha256(artifact.read_bytes()).hexdigest() == old["artifact_hash"]:
                         store.put("run", identifier, {**store.get("run", identifier), "export_id": old["id"],
                                   "artifact": old["artifact"], "artifact_hash": old["artifact_hash"], "export_approved": True,
                                   "export_state": "ready", "export_stage": "ready", "export_error": None, "pending_export_id": None})
                         return {"export_id": old["id"], "download_url": f"/api/runs/{identifier}/download"}
             template = next((x for x in assets if x["role"] == "template"), None)
-            content = (store.root / "files" / template["storage_name"]).read_bytes() if template else None
+            content = store.blob_path("files", template["storage_name"]).read_bytes() if template else None
             export = store.add("export", {"run_id": identifier, "result_hash": run["result_hash"], "version": version,
                                           "status": "building", "stage": "validating"})
             def stage(value):
@@ -540,6 +558,7 @@ def create_app(data_dir=None, frontend_dir=None):
             target = store.root / "artifacts" / filename
             export_workbook(run["result"], saved["spec"], run["snapshot"], target, content,
                             template_sheet_name=template["table"]["sheet"] if template else None, on_stage=stage)
+            store.persist_artifact(filename)
             ready = {**store.get("export", export["id"]), "status": "ready", "artifact": filename,
                      "artifact_hash": hashlib.sha256(target.read_bytes()).hexdigest(), "finished_at": now()}
             updated = {**store.get("run", identifier), "export_approved": True, "artifact": filename,
@@ -547,7 +566,7 @@ def create_app(data_dir=None, frontend_dir=None):
                        "export_state": "ready", "export_stage": "ready", "export_error": None}
             store.commit_bundle(updates=[("export", export["id"], ready), ("run", identifier, updated)], additions=[
                 ("approval", {"stage": "export", "decision": "approved", "run_id": identifier, "snapshot": run["result_hash"],
-                              "export_id": export["id"], "acknowledge_exceptions": request.acknowledge_exceptions, "actor": "Local demo operator"}),
+                              "export_id": export["id"], "acknowledge_exceptions": request.acknowledge_exceptions, "actor": actor}),
                 ("activity", {"action": "export_approved", "subject": identifier,
                               "detail": {"exceptions": run["summary"]["exception"], "export_id": export["id"]}})])
             return {"export_id": export["id"], "download_url": f"/api/runs/{identifier}/download"}

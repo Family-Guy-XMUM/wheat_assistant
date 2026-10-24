@@ -2,7 +2,11 @@
 
 The interface brand is `wheat`; the repository, source package and executable use `wheat_assistant`.
 
-A local web prototype for small wholesalers: combine channel order files, confirm business rules, prepare warehouse picking data, and reuse the flow next week. Only team-created synthetic business data is used in the demo.
+A web prototype for small wholesalers: combine channel order files, confirm business rules, prepare warehouse picking data, and reuse the flow next week. Only team-created synthetic business data is used in the demo.
+
+**Live Prototype URL: [https://wheat-assistant.replit.app](https://wheat-assistant.replit.app)** — no Replit login required. The public three-week workflow and actual Excel download were verified on 2026-10-24 MYT. Each browser gets a separate synthetic demo workspace; keep its cookies to return to saved history. The online AI entry is configured, while the existing model-quality limitations below remain.
+
+For the separate Replit cloud entry point, browser-private workspaces and PostgreSQL persistence, see [REPLIT_DEPLOYMENT.md](REPLIT_DEPLOYMENT.md). The desktop entry point remains available locally.
 
 The application and source package were renamed from MaiZi to `wheat_assistant` on 2026-10-23. Earlier verification receipts retain their original names and hashes. Rebuilt artifacts use the new name; earlier Windows and live-model limitations still apply.
 
@@ -71,9 +75,9 @@ Failed or interrupted runs can be retried with the same run ID and approved snap
 
 ## Implementation and verification
 
-React/TypeScript frontend → FastAPI → validated FlowSpec → deterministic Python subprocess. SQLite stores immutable flow approvals, input hashes, run snapshots and activity. Rows retain source file/sheet/row and each transformation. Resource limits bound the child process; it executes only bundled operations and receives no model credentials. This is process separation, not a hardened arbitrary-code sandbox; arbitrary generated code is never accepted.
+React/TypeScript frontend → FastAPI → validated FlowSpec → deterministic Python subprocess. Desktop mode uses SQLite; the Replit cloud entry point stores scoped approvals, inputs, results and export bytes in PostgreSQL. Rows retain source file/sheet/row and each transformation. Resource limits bound the child process; it executes only bundled operations and receives no model credentials. This is process separation, not a hardened arbitrary-code sandbox; arbitrary generated code is never accepted.
 
-`backend/wheat_assistant/status_guard.py` was developed and tested in a real Replit Free project, downloaded, hash-checked and integrated unchanged. `REPLIT_MODULE.json` records its sanitized provenance. Replit is not hosting the full app. Orbyte identity/task handoff is simulated and labeled. No fine-tuning or GPU training has been performed.
+`backend/wheat_assistant/status_guard.py` was developed and tested in a real Replit Free project, downloaded, hash-checked and integrated unchanged. `REPLIT_MODULE.json` records its sanitized provenance. The complete public prototype now runs on a Replit Reserved VM with Replit PostgreSQL. Cloud verification added fourteen tests, including a real PostgreSQL three-week journey and loss of the temporary file cache; the full local suite has 148 passing tests. Orbyte identity/task handoff is simulated and labeled. No fine-tuning or GPU training has been performed.
 
 ```sh
 uv run pytest -q
@@ -86,7 +90,7 @@ uv run python scripts/check_api.py   # optional; makes one real configured-provi
 uv run python scripts/build_bundle.py
 ```
 
-The build script creates an OS-native `dist/wheat_assistant-<OS>-<architecture>-v0.2.1.zip` with a source manifest. Run it on each target OS; it is not a cross-compiler. `.github/workflows/check.yml` prepares macOS/Windows checks and artifacts when run in your repository. A prepared workflow is not evidence that either hosted job has run. Development binaries are unsigned/not notarized. This foundation does not include submission documents, a public deployment or a completed competition submission.
+The build script creates an OS-native `dist/wheat_assistant-<OS>-<architecture>-v0.2.1.zip` with a source manifest. Run it on each target OS; it is not a cross-compiler. `.github/workflows/check.yml` prepares macOS/Windows checks and artifacts when run in your repository. A prepared workflow is not evidence that either hosted job has run. Development binaries are unsigned/not notarized. Submission documents and the official competition submission are separate from the live prototype.
 
 See [ACCEPTANCE.md](ACCEPTANCE.md) for the measured v0.2 results and remaining gates. The six live-model cases used all twelve authorized requests: one succeeded after structural repair and five were rejected as invalid output. No first-attempt successes were observed. Those failures remain recorded; deterministic editable setup works without a key. Schema and repair guidance were subsequently strengthened and mock-tested, but have not received another live verification within this budget.
 

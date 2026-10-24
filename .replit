@@ -1,0 +1,35 @@
+entrypoint = "backend/wheat_assistant/cloud.py"
+modules = ["python-3.12", "nodejs-22"]
+run = ["bash", "scripts/replit_dev.sh"]
+
+[env]
+PORT = "3000"
+WHEAT_PUBLIC_HOSTS = "wheat-assistant.replit.app"
+WHEAT_CLOUD_LIVE_AI = "1"
+WHEAT_CLOUD_DAILY_CALL_LIMIT = "20"
+LLM_DAILY_CALL_LIMIT = "4"
+
+[deployment]
+deploymentTarget = "vm"
+build = ["bash", "scripts/replit_build.sh"]
+run = ["bash", "scripts/replit_start.sh"]
+
+[[ports]]
+localPort = 3000
+externalPort = 80
+
+[packager.features]
+enabledForHosting = false
+guessImports = false
+
+[workflows]
+runButton = "wheat cloud"
+
+[[workflows.workflow]]
+name = "wheat cloud"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash scripts/replit_dev.sh"
+waitForPort = 3000

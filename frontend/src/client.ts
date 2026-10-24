@@ -14,11 +14,12 @@ export class ApiError extends Error {constructor(message:string,readonly status:
 export const responseLost=(error:unknown)=>!(error instanceof ApiError)||error.status>=500;
 export async function api<T=Data>(path:string, options:RequestInit & {json?:unknown} = {}):Promise<T> {
   const {json,signal,...rest}=options;
+  const headers=new Headers(rest.headers);headers.set('X-Wheat-Request','1');if(json!==undefined)headers.set('Content-Type','application/json');
   const controller=new AbortController();let timedOut=false;
   const cancel=()=>controller.abort();signal?.addEventListener('abort',cancel,{once:true});if(signal?.aborted)cancel();
   const timer=setTimeout(()=>{timedOut=true;controller.abort();},120000);
   try{
-    const response=await fetch('/api'+path,{...rest,signal:controller.signal,...(json===undefined?{}:{headers:{...rest.headers,'Content-Type':'application/json'},body:JSON.stringify(json)})});
+    const response=await fetch('/api'+path,{...rest,headers,signal:controller.signal,...(json===undefined?{}:{body:JSON.stringify(json)})});
     if(!response.ok){const error=await response.json().catch(()=>({detail:'The local server could not complete this request.'}));throw new ApiError(typeof error.detail==='string'?error.detail:JSON.stringify(error.detail),response.status);}
     return await response.json();
   }catch(error){if(timedOut)throw new Error('Request timed out. Refresh the saved status before retrying; the server may still be processing.');throw error;}

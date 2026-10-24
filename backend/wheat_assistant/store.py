@@ -82,6 +82,19 @@ class Store:
         if self._closed:
             raise RuntimeError("The local store is closed")
 
+    def write_blob(self, folder, name, content):
+        path = self.root / folder / name
+        if not path.exists():
+            path.write_bytes(content)
+            path.chmod(0o400)
+        return path
+
+    def blob_path(self, folder, name):
+        return self.root / folder / name
+
+    def persist_artifact(self, name):
+        return self.blob_path("artifacts", name)
+
     def add(self, kind, data):
         self._require_open()
         payload = {**data, "id": uuid.uuid4().hex, "created_at": now()}

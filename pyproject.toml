@@ -17,6 +17,9 @@ dependencies = [
 [dependency-groups]
 dev = ["pytest>=8,<10", "hypothesis>=6,<7", "pyinstaller>=6,<7"]
 
+[project.optional-dependencies]
+replit = ["psycopg[binary]>=3.2,<4"]
+
 [project.scripts]
 wheat_assistant = "wheat_assistant.launcher:main"
 
