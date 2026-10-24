@@ -4,6 +4,8 @@
 
 ## 2026-10-24 CI and planner remediation
 
+Validated code commit `cffc0afadb4736db908e7e445eb7348cb9965220` passed the [complete Windows and macOS CI run](https://github.com/Family-Guy-XMUM/wheat_assistant/actions/runs/40104303886). Windows passed all eight automatic stages, 178 Python tests, browser acceptance, source and independently extracted native journeys, and three complete scale trials. Export times were 5.070 / 5.103 / 5.486 seconds, median **5.103 seconds** against the unchanged 10-second target. Each source/native journey passed three restarts and four graceful stops with a refused connection and exclusive rebinding. Operator launch, Ctrl+C and Excel confirmation remain pending.
+
 The isolated code candidate passed 178 Python tests. The preceding Windows and macOS CI candidate also passed all 8 browser acceptance cases. The existing assertions remain; 30 regression cases cover sanitized failure evidence, read-only test caches, model output boundaries, reproducible synthetic XLSX files, the exported workbook's MIME type, delayed connection refusal and full worksheet formula validation.
 
 The [first remediation CI run](https://github.com/Family-Guy-XMUM/wheat_assistant/actions/runs/40102119411) passed macOS but exposed one Windows failure: the XLSX download inherited an incorrect MIME mapping from its host. The API now declares the XLSX media type explicitly. Two simulated incorrect host mappings failed before the fix and passed afterward.
@@ -27,7 +29,9 @@ The planner still uses `agnes-2.5-flash` and FlowSpec v1. It now validates the c
 
 This remediation used **13 of 14 authorized HTTP requests**: 7 diagnostic requests, followed by 6 first-attempt passes on the final planner. The six final cases were run in three subsets (2 + 3 + 1), with identical planner and fixture hashes, then independently revalidated and scored together using their stored outputs. They were not one uninterrupted full-suite run. No answers or expected results were manually changed. The earlier 12-request failure and the initial diagnostic failures are retained.
 
-Final planner SHA-256: `8d1a9137029ff70d2f0c482f3ec854f73e6911fb31d3c283efd35ba22428cf0c`; evaluation fixtures SHA-256: `fb9f8c4b435226ea39bff5cd77a89b74d04d3de9d6fd8e133d3cb07acbda729f`. The local evidence receipt is `output/verification/remediation-20261024-213859/planner-quality.json`; it is not a committed repository file. Six synthetic cases provide bounded evidence, not a general model reliability guarantee.
+Final planner SHA-256: `8d1a9137029ff70d2f0c482f3ec854f73e6911fb31d3c283efd35ba22428cf0c`; evaluation fixtures SHA-256: `fb9f8c4b435226ea39bff5cd77a89b74d04d3de9d6fd8e133d3cb07acbda729f`. The final clean-code offline revalidation receipt is `output/verification/remediation-20261024-213859/planner-quality-final-branch.json`, tied to code commit `cffc0af`. The earlier `planner-quality.json` retains the shared-workspace snapshot and is not the final branch runtime fingerprint. These local receipts are not committed repository files; full runtime fingerprints are platform specific. Six synthetic cases provide bounded evidence, not a general model reliability guarantee.
+
+The usage `prompt_hash` identifies the original planning input. `attempt` distinguishes a format-repair request; the hash does not identify the complete amended messages sent on that retry. No raw provider messages or credentials are included in public usage records.
 
 Run the deterministic fixture oracle without a provider call:
 

@@ -2,7 +2,7 @@
 
 > Commands and code paths in this document are relative to the repository root. See the [documentation index](../README.md).
 
-**交付状态：修正候选，待新 Windows 实机回执。** 目标环境为 Windows 11 x64。v0.2.0 回执已证明安装、7项浏览器和手动三周流程可运行，但正式自动验收失败：CSV夹具换行、自动停止、过滤环境原生启动、性能数据库释放均有问题；这些旧失败不被覆盖。v0.2.1 的 macOS 通过不能代替 Windows 通过。
+**交付状态：Windows 自动 CI 已通过；人工启动停止和 Excel 仍待回执。** 代码提交`cffc0afadb4736db908e7e445eb7348cb9965220`的[完整CI](https://github.com/Family-Guy-XMUM/wheat_assistant/actions/runs/40104303886)已实际通过Windows八阶段／178测试／浏览器／源码及独立原生三周、各三重启和四次graceful停止；性能三次5.070／5.103／5.486秒，中位5.103≤10秒。此为CI Windows x64实测；目标Windows 11 x64人工使用仍须下方清单。v0.2.0旧自动失败及前三轮整改失败保留，macOS通过不替代Windows证据。
 
 演示仅含团队自造合成数据，Orbyte 为模拟；本轮不调用真实模型。源码 ZIP 不是 Windows EXE，原生 ZIP 必须在 Windows 构建。
 
